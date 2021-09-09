@@ -10,6 +10,7 @@ beta = regs.beta;
 eta = regs.eta;
 lamb = regs.lambda;
 mu = regs.mu;
+max_iters = 5;
 
 Aoh = zeros(O,H,K);
 Coh = zeros(O,H,K);
@@ -29,52 +30,54 @@ end
 Aoh(Aoh<0) = 0;
 
 disp('Starting iterative algorithm')
-% Step 1: infer Ao and Aoh
-cvx_begin quiet
-    variable Ao(O,O,K) symmetric
-    variable Aoh(O,H,K)
-    
-    
-    % fro^2 norm -> norm(vec(comm constraint),2)^2
-    
-    f0 = 0;
-    for k=1:K
-        % Sparse penalties
-        f0 = f0 + alpha*norm(vec(Ao(:,:,k)),1) + lamb*norm(vec(Aoh(:,:,k)),1);
-        % Commutativity penalty
-        f0 = f0 + mu*norm(Co(:,:,k)*Ao(:,:,k)+Coh(:,:,k)*Aoh(:,:,k)'...
-            -Ao(:,:,k)*Co(:,:,k)-Aoh(:,:,k)*Coh(:,:,k)','fro');
-        % Graph similarity penalties
-        for j=2:k
-           f0 = f0 + beta*norm(vec(Ao(:,:,k)-Ao(:,:,j)),1)...
-               + eta*norm(vec(Aoh(:,:,k)-Aoh(:,:,j)));
-        end
-    end
-    
-    % Vectorize objective function
-    %f0 = alpha*norm(vec(Ao),1) + lamb*norm(vec(Aoh),1);
-    %norm(vec(pagemtimes(Co,Ao)),2)
-    
-    minimize(f0)
-    subject to
-        Ao >= 0;
-        Aoh >= 0;
-        sum(Ao(:,1,1))== 1;
+for i=1:max_iters
+    % Step 1: infer Ao and Aoh
+    cvx_begin quiet
+        variable Ao(O,O,K) symmetric
+        variable Aoh(O,H,K)
+
+        f0 = 0;
         for k=1:K
-            diag(Ao(:,:,k)) == 0;
+            % Sparse penalties
+            f0 = f0 + alpha*norm(vec(Ao(:,:,k)),1) + lamb*norm(vec(Aoh(:,:,k)),1);
+            % Commutativity penalty
+            f0 = f0 + mu*norm(Co(:,:,k)*Ao(:,:,k)+Coh(:,:,k)*Aoh(:,:,k)'...
+                -Ao(:,:,k)*Co(:,:,k)-Aoh(:,:,k)*Coh(:,:,k)','fro');
+            % Graph similarity penalties
+            for j=2:k
+               f0 = f0 + beta*norm(vec(Ao(:,:,k)-Ao(:,:,j)),1)...
+                   + eta*norm(vec(Aoh(:,:,k)-Aoh(:,:,j)));
+            end
         end
-cvx_end
 
+        % Vectorize objective function
+        %f0 = alpha*norm(vec(Ao),1) + lamb*norm(vec(Aoh),1);
+        %norm(vec(pagemtimes(Co,Ao)),2)
 
-% Step 2: infer Coh
-cvx_begin quiet
-    variable Coh(O,H,K)
+        minimize(f0)
+        subject to
+            Ao >= 0;
+            Aoh >= 0;
+            sum(Ao(:,1,1))== 1;
+            for k=1:K
+                diag(Ao(:,:,k)) == 0;
+            end
+    cvx_end
+
+    % Step 2: infer Coh
+    cvx_begin quiet
+        variable Coh(O,H,K)
+
+        f0 = 0;
+        for k=1:K
+            % Commutativity penalty
+            f0 = f0 + mu*norm(Co(:,:,k)*Ao(:,:,k)+Coh(:,:,k)*Aoh(:,:,k)'...
+                -Ao(:,:,k)*Co(:,:,k)-Aoh(:,:,k)*Coh(:,:,k)','fro');
+        end
+        minimize(f0)        
+    cvx_end
     
-    f0 = 0;
-    for k=1:K
-        % Commutativity penalty
-        f0 = f0 + mu*norm(Co(:,:,k)*Ao(:,:,k)+Coh(:,:,k)*Aoh(:,:,k)'...
-            -Ao(:,:,k)*Co(:,:,k)-Aoh(:,:,k)*Coh(:,:,k)','fro');
+    if verb
+        disp(['Iter: ' num2str(i)])
     end
-    minimize(f0)
-cvx_end
+end
