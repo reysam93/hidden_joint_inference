@@ -33,8 +33,8 @@ disp('Starting iterative algorithm')
 for i=1:max_iters
     % Step 1: infer Ao and Aoh
     cvx_begin quiet
-        variable Ao(O,O,K) symmetric
-        variable Aoh(O,H,K)
+        variable Ao(O,O,K) symmetric nonnegative
+        variable Aoh(O,H,K) nonnegative
 
         f0 = 0;
         for k=1:K
@@ -44,7 +44,7 @@ for i=1:max_iters
             f0 = f0 + mu*norm(Co(:,:,k)*Ao(:,:,k)+Coh(:,:,k)*Aoh(:,:,k)'...
                 -Ao(:,:,k)*Co(:,:,k)-Aoh(:,:,k)*Coh(:,:,k)','fro');
             % Graph similarity penalties
-            for j=2:k
+            for j=1:(k-1)
                f0 = f0 + beta*norm(vec(Ao(:,:,k)-Ao(:,:,j)),1)...
                    + eta*norm(vec(Aoh(:,:,k)-Aoh(:,:,j)));
             end
@@ -58,9 +58,9 @@ for i=1:max_iters
         subject to
             Ao >= 0;
             Aoh >= 0;
-            sum(Ao(:,1,1))== 1;
             for k=1:K
                 diag(Ao(:,:,k)) == 0;
+                sum(Ao(:,1,k))== 1;
             end
     cvx_end
 
