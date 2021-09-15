@@ -53,7 +53,9 @@ low_tri_ind = find(tril(ones(N,N))-eye(N));
 
 %------------------------
 S_joi = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
+P_joi = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
 S_sep = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
+P_sep = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
 %------------------------
 
 %--------------------------------------------------------------------------
@@ -171,6 +173,11 @@ for graph_trial_idx=1:num_graph_trials
                         norm(Co_est(:,:,k)*So(:,:,k)+P(:,:,k)-So(:,:,k)*Co_est(:,:,k)-P(:,:,k)','fro') <= eps;
                     end
             cvx_end
+
+            for k=1:K
+                S_sep{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=So(:,:,k);
+                P_sep{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=P(:,:,k);
+            end
             %------------------------
 
             %------------------------
@@ -203,11 +210,10 @@ for graph_trial_idx=1:num_graph_trials
                         norm(Co_est(:,:,k)*So(:,:,k)+P(:,:,k)-So(:,:,k)*Co_est(:,:,k)-P(:,:,k)','fro') <= eps;
                     end
             cvx_end
-            So_est = cell(K,1)
-            P_est = cell(K,1)
+
             for k=1:K
-                So_est{k} = So(:,:,k)
-                P_est{k} = P(:,:,k)
+                S_joi{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=So(:,:,k);
+                P_joi{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=P(:,:,k);
             end
             %------------------------
 
