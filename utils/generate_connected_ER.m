@@ -10,10 +10,8 @@ while flag_connected ==0
     % Check that graph is connected
     L = diag(sum(G))-G;
     [~, Lambda] = eig(L);
-    sum(diag(abs(Lambda))<=10^-6);
     if sum(diag(abs(Lambda))<=10^-6)==1
         flag_connected = 1;
-        sum(diag(abs(Lambda))<=10^-6);
     end
 end
 end
