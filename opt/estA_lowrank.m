@@ -4,11 +4,11 @@ P = [];
 
 O = size(Co,1);
 K = size(Co,3);
-alp = regs.alpha;
-gamma = regs.gamma;
-beta = regs.beta;
-eps = regs.epsilon;
-
+alp = regs.alpha; %1e-3
+gamma = regs.gamma;%1e1
+beta = regs.beta;%1
+eta = regs.eta;%1e-1
+eps = regs.epsilon;%1e-6
 cvx_begin quiet
     variable Ao(O,O,K) symmetric nonnegative
     variable P(O,O,K)
@@ -17,13 +17,12 @@ cvx_begin quiet
     for k=1:K
         f0 = f0 + alp*norm(vec(Ao(:,:,k)),1) + gamma*norm_nuc(P(:,:,k));
         for j=1:(k-1)
-           f0 = f0 + norm(vec(Ao(:,:,k)-Ao(:,:,j)),1);
+           f0 = f0 + beta*norm(vec(Ao(:,:,k)-Ao(:,:,j)),1) + eta*sum(norms(P(:,:,k)-P(:,:,j),2));
         end
     end
     
     minimize(f0)
     subject to
-        %norm(vec(pagemtimes(Co,Ao)+P-pagemtimes(Ao,Co)-P'),2)^2 <= eps^2;
         for k=1:K
             diag(Ao(:,:,k)) == 0;
             sum(Ao(:,1,k))== 1;
