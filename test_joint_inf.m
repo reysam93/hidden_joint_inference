@@ -6,9 +6,11 @@ addpath(['../../../Code/CVX/cvx'])
 
 %------------------------
 num_graph_trials = 1;
-num_signal_trials = 3;
+num_signal_trials = 7;
 S_true = cell(num_graph_trials,1);
 P_true = cell(num_graph_trials,1);
+Pp_true = cell(num_graph_trials,1);
+Pm_true = cell(num_graph_trials,1);
 So_true = cell(num_graph_trials,1);
 Soh_true = cell(num_graph_trials,1);
 %------------------------
@@ -28,9 +30,8 @@ N = 20;
 O = 19;
 Nchoose2 = N*(N-1)/2;
 
+p=.2;
 hid_nodes = 'min';
-pert_links = 3;
-L = 3;
 %------------------------
 
 %------------------------
@@ -55,9 +56,9 @@ low_tri_ind = find(tril(ones(N,N))-eye(N));
 %------------------------
 
 %------------------------
-S_joi = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
+So_joi = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
 P_joi = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
-S_sep = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
+So_sep = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
 P_sep = cell(num_graph_trials,num_signal_trials,num_signal_range,K);
 %------------------------
 
@@ -77,7 +78,7 @@ for graph_trial_idx=1:num_graph_trials
 %         S_true{graph_trial_idx,k} = S{k};
 %     end
 
-     S = gen_similar_graphs(K,N,3,.2);
+     S = gen_similar_graphs(K,N,pert_links,p);
 
     for k=1:K
         S_true{graph_trial_idx,k} = S{k};
@@ -121,6 +122,8 @@ for graph_trial_idx=1:num_graph_trials
     for k=1:K
         So_true{graph_trial_idx,k}  = S_true{graph_trial_idx,k}(n_o,n_o);
         Soh_true{graph_trial_idx,k} = S_true{graph_trial_idx,k}(n_o,n_h);
+        So_true{graph_trial_idx,k}  = So_true{graph_trial_idx,k}/sum(So_true{graph_trial_idx,k}(:,1));
+        Soh_true{graph_trial_idx,k} = Soh_true{graph_trial_idx,k}/sum(Soh_true{graph_trial_idx,k}(:,1));
     end
     %------------------------
 
@@ -128,6 +131,11 @@ for graph_trial_idx=1:num_graph_trials
     % P matrices
     for k=1:K
         P_true{graph_trial_idx,k} = Coh{k}*(Soh{k}');
+
+        Pp_true{graph_trial_idx,k} = zeros(size(P_true{graph_trial_idx,k}));
+        Pm_true{graph_trial_idx,k} = zeros(size(P_true{graph_trial_idx,k}));
+        Pp_true{graph_trial_idx,k}(P_true{graph_trial_idx,k}>=0) = P_true{graph_trial_idx,k}(P_true{graph_trial_idx,k}>=0);
+        Pm_true{graph_trial_idx,k}(P_true{graph_trial_idx,k}<0) = P_true{graph_trial_idx,k}(P_true{graph_trial_idx,k}<0);
     end
     %------------------------
 
@@ -189,7 +197,7 @@ for graph_trial_idx=1:num_graph_trials
                     end
             cvx_end
             for k=1:K
-                S_sep{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=So(:,:,k);
+                So_sep{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=So(:,:,k);
                 P_sep{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=P(:,:,k);
             end
 
@@ -226,7 +234,7 @@ for graph_trial_idx=1:num_graph_trials
 %                     sum(So(:,1,1))== 1;
                     P == Pp-Pm;
                     Pp>=0;
-                    Pm>=0;
+                    Pm<0;
                     for k=1:K
                         sum(So(:,1,k))== 1;
                         diag(So(:,:,k)) == 0;
@@ -235,7 +243,7 @@ for graph_trial_idx=1:num_graph_trials
             cvx_end
 
             for k=1:K
-                S_joi{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=So(:,:,k);
+                So_joi{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=So(:,:,k);
                 P_joi{graph_trial_idx,signal_trial_idx,num_signal_idx,k}=P(:,:,k);
             end
             %------------------------
@@ -243,6 +251,9 @@ for graph_trial_idx=1:num_graph_trials
         end
     end
 end
+
+% sum(norms(Pp_true{1,1}+Pm_true{1,1} - Pp_true{1,2}-Pm_true{1,2},1))
+% norm(Pp_true{1,1}+Pm_true{1,1} - Pp_true{1,2}-Pm_true{1,2},1)
 
 fignum=1;
 
@@ -253,11 +264,11 @@ imagesc(S_true{g,k});
 colorbar();
 title(['True graph ',num2str(k)]);
 subplot(1,3,2);
-imagesc(S_sep{g,s,r,k});
+imagesc(So_sep{g,s,r,k});
 colorbar();
 title(['Sep. graph ',num2str(k)]);
 subplot(1,3,3);
-imagesc(S_joi{g,s,r,k});
+imagesc(So_joi{g,s,r,k});
 colorbar();
 title(['Joi. graph ',num2str(k)]);
 
@@ -290,9 +301,9 @@ for g=1:num_graph_trials
         for r=1:num_signal_range
             for k=1:K
                 error_sep_trials(g,s,r,k) = ...
-                    norm(S_sep{g,s,r,k}(:) - So_true{g,k}(:),'fro')^2/norm(So_true{g,k}(:),'fro')^2;
+                    norm(So_sep{g,s,r,k}(:) - So_true{g,k}(:),'fro')^2/norm(So_true{g,k}(:),'fro')^2;
                 error_joi_trials(g,s,r,k) = ...
-                    norm(S_joi{g,s,r,k}(:) - So_true{g,k}(:),'fro')^2/norm(So_true{g,k}(:),'fro')^2;
+                    norm(So_joi{g,s,r,k}(:) - So_true{g,k}(:),'fro')^2/norm(So_true{g,k}(:),'fro')^2;
             end
         end
     end
