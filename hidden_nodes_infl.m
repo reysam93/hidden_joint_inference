@@ -37,12 +37,12 @@ regs2 = struct();
 
 tic
 err = zeros(2*length(Ks),length(Os),n_graphs);
-for g=1:n_graphs
+parfor g=1:n_graphs
     disp(['G: ' num2str(g)])
     % Create graphs and get hidden nodes
     A = generate_connected_ER(N,p);
     As = gen_similar_graphs(A,Ks(end),pert_links);
-    
+        
     err_g = zeros(2*length(Ks),length(Os));
     for i=1:length(Os)
         O = Os(i);
@@ -79,19 +79,36 @@ for g=1:n_graphs
                 err_aux(1,k) = norm(Ao(:,:,k)-Ao_am_hid(:,:,k),'fro')^2/norm_Ao;
                 err_aux(2,k) = norm(Ao(:,:,k)-Ao_am_nohid(:,:,k),'fro')^2/norm_Ao;
             end
-            err_g(1*j,i) = mean(err_aux(1,:));
-            err_g(1*j+1,i) = mean(err_aux(2,:));
-        end
+            err_g(2*j-1,i) = mean(err_aux(1,:));
+            err_g(2*j,i) = mean(err_aux(2,:));
+        end        
     end
     err(:,:,g) = err_g;
 end
-
+t = toc;
+disp(['--- ' num2str(t/3600) ' hours ---'])
 %% Plot results
 mean_err = mean(err,3);
 median_err = median(err,3);
 
 figure()
-plot(N-Os,mean_err(1,:));hold on
-plot(N-Os,mean_err(2,:));hold on
-plot(N-Os,mean_err(3,:));hold on
-plot(N-Os,mean_err(4,:));hold on
+plot(N-Os,mean_err(1,:),'-o');hold on
+plot(N-Os,mean_err(2,:),'--o');hold on
+plot(N-Os,mean_err(3,:),'-x');hold on
+plot(N-Os,mean_err(4,:),'--x');hold on
+legend({'AM rw,K=3', 'AM rw nohid,K=3','AM rw,K=6', 'AM rw nohid,K=6'})
+grid on
+axis tight
+xlabel('H')
+title('Mean err')
+
+figure()
+plot(N-Os,median_err(1,:),'-o');hold on
+plot(N-Os,median_err(2,:),'--o');hold on
+plot(N-Os,median_err(3,:),'-x');hold on
+plot(N-Os,median_err(4,:),'--x');hold on
+legend({'AM rw,K=3', 'AM rw nohid,K=3','AM rw,K=6', 'AM rw nohid,K=6'})
+grid on
+axis tight
+xlabel('H')
+title('Median err')
