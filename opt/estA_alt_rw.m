@@ -51,6 +51,8 @@ for i=1:max_iters
             for k=1:K
                 diag(Ao(:,:,k)) == 0;
                 sum(Ao(:,1,k))== 1;
+%                 sum(Ao(:,1,k))>= 1;
+%                 sum(Aoh(:,1,k))>= 1;
             end
     cvx_end
     

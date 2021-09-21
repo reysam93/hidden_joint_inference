@@ -37,6 +37,7 @@ parfor g=1:n_graphs
     Cs = zeros(N,N,K);
     for k=1:K
         h = rand(L,1)*2-1;
+        h = h/norm(h,1);
         H = zeros(N);
         for l=1:L
             H = H + h(l)*As(:,:,k)^(l-1);
