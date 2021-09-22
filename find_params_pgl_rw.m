@@ -58,7 +58,7 @@ parfor g=1:n_graphs
     Co = Cs(n_o,n_o,:);
     Coh = Cs(n_o,n_h,:);
     
-    regs = struct('delta1',delta1,'delta2',delta2);
+    regs = struct();
     err_g = zeros(K,length(mus),length(etas),length(betas),...
         length(gammas),length(deltas),length(alphas));
     for i=1:length(alphas)
