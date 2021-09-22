@@ -3,7 +3,7 @@ rng(10)
 addpath(genpath('utils'));
 addpath(genpath('opt'));
 
-n_graphs = 16;
+n_graphs = 30;
 K = 3;
 N = 20;
 O = 19;
@@ -12,7 +12,7 @@ pert_links = 3;
 L = 3;
 M = 1e3;
 sampled = false;
-nomalized_C = false;
+norm_C = false;
 hid_nodes = 'min';
 max_iters = 15;
 
@@ -73,7 +73,7 @@ parfor g=1:n_graphs
                         regs.eta = etas(l);
                         for m=1:length(mus)
                             regs.mu = mus(m);
-                            [Ao_hat,~,~] = estA_alt_rw(Co,N-O,regs,max_iters);
+                            [Ao_hat,~,~] = estA_pgl_colsp_rw2(Co,N-O,regs,max_iters);
                             Ao_hat = Ao_hat./max(max(Ao_hat));
                             diff_Ao = Ao-Ao_hat;
                             for n=1:K
