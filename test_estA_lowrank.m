@@ -1,5 +1,5 @@
 %%
-rng(5)
+%rng(5)
 addpath(genpath('utils'));
 addpath(genpath('opt'));
 
@@ -18,122 +18,60 @@ regs = struct();
 regs.lambda = 1;
 % regs for initialization
 
-regs.epsilon = 1e-6;
+prms.epsilon = 1e-6;
 % Regs for reweighted
-regs.delta1 = 1e-3;
-regs.delta2 = 1e-3;
-regs.max_iters = 10;
+prms.delta1 = 1e-4;
+prms.delta2 = 1e-4;
+prms.max_iters = 5;
 
 hid_nodes = 'min';
-nG = 2;
-model = 'grouplasso rw';
+nG = 100;
+%models = {'baseline','lowrank','lowrank rw','grouplasso','grouplasso rw'};
+models = {'lowrank rw'};
 
-if strcmp(model,'lowrank')
-    regs.alpha = 1e-3;
-    regs.gamma = 10; 
-    regs.beta = 1;  
-    regs.eta = 1e-1;
-elseif strcmp(model,'lowrank rw')
-    regs.alpha = 1e-2;
-    regs.gamma = 1; 
-    regs.beta = 1e-1;  
-    regs.eta = 1e-1;
-    regs.mu = 1e2; 
-elseif strcmp(model,'grouplasso')
-    regs.alpha = 1e-3;
-    regs.gamma = 10; 
-    regs.beta = 1;  
-    regs.eta = 1e-1;
-elseif strcmp(model,'grouplasso rw')
-    regs.alpha = 1e-2;
-    regs.gamma = 1; 
-    regs.beta = 1e-1;  
-    regs.eta = 1e-1;
-    regs.mu = 1e2; 
-elseif strcmp(model,'baseline')
-    regs.alpha = 1; 
-    regs.beta = 1;  
-end
 % Create graphs
 As = zeros(N,N,K);
-err_joint = zeros(nG,HH,K);
-err_sep = zeros(nG,HH,K);
+err_joint = zeros(nG,numel(models),HH,K);
+err_sep = zeros(nG,numel(models),HH,K);
 tic
-for g = 1:nG
+parfor g = 1:nG
     A = generate_connected_ER(N,p);
     A_org = A;
-    for hd = 1:HH
-        As = gen_similar_graphs(A,K,pert_links);
+    err_joint_g = zeros(numel(models),HH,K);
+    err_sep_g = zeros(numel(models),HH,K);
+    
+    for m = 1:numel(models)
+        model = models{m};
+        regs = get_regs(model,prms);
+        for hd = 1:HH
+            As = gen_similar_graphs(A,K,pert_links);
 
-        % Create covariances
-        Cs = zeros(N,N,K);
-        for k=1:K
-            h = rand(L,1)*2-1;
-            H = zeros(N);
-            for l=1:L
-                H = H + h(l)*As(:,:,k)^(l-1);
-            end
-
-            if sampled
-                X = H*randn(N,M);
-                Cs(:,:,k) = X*X'/M;
-            else
-                Cs(:,:,k) = H^2;
-            end
-        end
+            Cs = create_cov(As,L,M,sampled);
         
-        % Same observed/hidden nodes for all graphs
-        [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
-        Ao = As(n_o,n_o,:);
-        Co = Cs(n_o,n_o,:);
-
-        % comm = norm(vec(pagemtimes(Cs,As)-pagemtimes(As,Cs)),'fro')^2;
-        % comm_obs = norm(vec(pagemtimes(Co,Ao)-pagemtimes(Ao,Co)),'fro')^2;
-        % disp(['norm(CA-AC) = ' num2str(comm) '  -  norm(CoAo-AoCo) = '...
-        %     num2str(comm_obs)])
-
-        Ao_hat = zeros(O,O,K);
-        Ao_hat_sep = zeros(O,O,K);
-        %tic
-        if strcmp(model,'lowrank')
-            [Ao_hat,~] = estA_lowrank(Co,regs);
+            % Same observed/hidden nodes for all graphs
+            [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
+            Ao = As(n_o,n_o,:);
+            Co = Cs(n_o,n_o,:);
+            
+            %Estimate graph structure
+            [Ao_hat,Ao_hat_sep] = estimate_A(model,Co,regs);
+            
+            Ao_hat = Ao_hat./max(max(Ao_hat));
+            Ao_hat_sep = Ao_hat_sep./max(max(Ao_hat_sep));
             for k=1:K
-                [Ao_hat_sep(:,:,k),~] = estA_lowrank(Co(:,:,k),regs);
+                norm_Ao = norm(Ao(:,:,k),'fro')^2;
+                err_joint_g(m,hd,k) = norm(Ao(:,:,k)-Ao_hat(:,:,k),'fro')^2/norm_Ao;
+                err_sep_g(m,hd,k) = norm(Ao(:,:,k)-Ao_hat_sep(:,:,k),'fro')^2/norm_Ao;
             end
-        elseif strcmp(model,'lowrank rw')
-            [Ao_hat,~] = estA_lowrank_rw(Co,regs);
-            for k=1:K
-                [Ao_hat_sep(:,:,k),~] = estA_lowrank_rw(Co(:,:,k),regs);
-            end
-        elseif strcmp(model,'baseline')
-            [Ao_hat,~] = estA_baseline(Co,regs);
-            for k=1:K
-                [Ao_hat_sep(:,:,k),~] = estA_baseline(Co(:,:,k),regs);
-            end
-        elseif strcmp(model,'grouplasso')
-            [Ao_hat,~] = estA_grouplasso(Co,regs);
-            for k=1:K
-                [Ao_hat_sep(:,:,k),~] = estA_grouplasso(Co(:,:,k),regs);
-            end
-        elseif strcmp(model,'grouplasso rw')
-            [Ao_hat,~] = estA_grouplasso_rw(Co,regs);
-            for k=1:K
-                [Ao_hat_sep(:,:,k),~] = estA_grouplasso_rw(Co(:,:,k),regs);
-            end
-        end
-        %toc
-
-        Ao_hat = Ao_hat./max(max(Ao_hat));
-        Ao_hat_sep = Ao_hat_sep./max(max(Ao_hat_sep));
-        for k=1:K
-            norm_Ao = norm(Ao(:,:,k),'fro')^2;
-            err_joint(g,hd,k) = norm(Ao(:,:,k)-Ao_hat(:,:,k),'fro')^2/norm_Ao;
-            err_sep(g,hd,k) = norm(Ao(:,:,k)-Ao_hat_sep(:,:,k),'fro')^2/norm_Ao;
         end
     end
+    err_joint(g,:,:,:) = err_joint_g;
+    err_sep(g,:,:,:) = err_sep_g;
+    
 end
 toc
 %%
+fmts = {'s-','x-','o-','*-','s:','x:','o:','*:'};
 figure()
 if HH == 1
     plot(squeeze(mean(err_sep,3)))
@@ -141,10 +79,19 @@ if HH == 1
     plot(squeeze(mean(err_joint,3)))
     legend(['Mean Error separate', num2str(mean(mean(err_sep)))],['Mean Error joint:',num2str(mean(mean(err_joint)))])
 else
-    plot(mean(mean(err_sep,3)))
-    hold on
-    plot(mean(mean(err_joint,3)))
-    legend('Mean Error separate','Mean Error joint')
+    res_err_sep = squeeze(median(median(err_sep,4)));
+    res_err_joint = squeeze(median(median(err_joint,4)));
+    for t = 1:4
+        plot(1:3,res_err_joint(t+1,:),fmts{t},'MarkerSize',12,'LineWidth',2)
+        hold on
+        lgnd{t} = ['Joint ' models{t+1}];
+    end
+    for t = 1:4
+        plot(1:3,res_err_sep(t+1,:),fmts{t+4},'MarkerSize',12,'LineWidth',2)
+        hold on
+        lgnd{t+4} = ['Sep ' models{t+1}];
+    end
+    legend(lgnd)
     
 end
 ylabel('Frobenius norm')
@@ -152,6 +99,8 @@ xlabel('Number of graphs')
 title('estA-Lowrank rw')
 
 disp([num2str(mean(mean(err_joint))), '----', num2str(mean(mean(err_sep)))])
+
+%%
 
 figure()
 for k = 1:K
