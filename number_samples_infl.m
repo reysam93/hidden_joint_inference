@@ -120,7 +120,7 @@ semilogx(Ms,med_err_sep(1,:),'--o'); hold on
 semilogx(Ms,med_err_sep(2,:),'--x'); hold on
 semilogx(Ms,med_err_sep(3,:),'--v'); hold off
 xlabel('Number of samples')
-ylabel('Mean error')
+ylabel('Median error')
 legend(leg)
 grid on; axis tight
 
@@ -163,7 +163,7 @@ semilogx(Ms,mean_fsc_sep(1,:),'--o'); hold on
 semilogx(Ms,mean_fsc_sep(2,:),'--x'); hold on
 semilogx(Ms,mean_fsc_sep(3,:),'--v'); hold off
 xlabel('Number of samples')
-ylabel('Mean error')
+ylabel('Mean fscore')
 legend(leg)
 grid on; axis tight
 
@@ -176,7 +176,7 @@ semilogx(Ms,med_fsc_sep(1,:),'--o'); hold on
 semilogx(Ms,med_fsc_sep(2,:),'--x'); hold on
 semilogx(Ms,med_fsc_sep(3,:),'--v'); hold off
 xlabel('Number of samples')
-ylabel('Mean error')
+ylabel('Median fscore')
 legend(leg)
 grid on; axis tight
 
