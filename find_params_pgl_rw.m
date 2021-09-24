@@ -14,6 +14,7 @@ M = 1e4;
 sampled = true;
 hid_nodes = 'min';
 max_iters = 10;
+th = 0.3;
 
 gammas = [10 25 50 75 100];
 betas = [25 50 100];
@@ -22,6 +23,8 @@ mus = [500 1000 2000];
 deltas = [1e-2 1e-3 1e-4];
 
 err = zeros(length(mus),length(etas),length(betas),length(gammas),...
+    length(deltas),n_graphs);
+fsc = zeros(length(mus),length(etas),length(betas),length(gammas),...
     length(deltas),n_graphs);
 tic
 parfor g=1:n_graphs
@@ -56,6 +59,8 @@ parfor g=1:n_graphs
     regs.alpha = 1;
     err_g = zeros(K,length(mus),length(etas),length(betas),...
         length(gammas),length(deltas));
+    fsc_g = zeros(K,length(mus),length(etas),length(betas),...
+        length(gammas),length(deltas));
     for o=1:length(deltas)
         regs.delta1 = deltas(o);
         for j=1:length(gammas)
@@ -72,6 +77,16 @@ parfor g=1:n_graphs
                         for n=1:K
                             norm_Ao = norm(Ao(:,:,n),'fro')^2;
                             err_g(n,m,l,k,j,o) = norm(diff_Ao(:,:,n),'fro')^2/norm_Ao;
+                            
+                            Ao_th = Ao(:,:,k);
+                            Ao_th(Ao_th >= th) = 1;
+                            Ao_th(Ao_th < th) = 0;
+                            
+                            Ao_hat_th = Ao(:,:,k);
+                            Ao_hat_th(Ao_hat_th >= th) = 1;
+                            Ao_hat_th(Ao_hat_th < th) = 0;
+                            [~,~,fsc_g(n,m,l,k,j,o),~,~] = ...
+                                graph_learning_perf_eval(Ao_th,Ao_hat_th);
                         end
                     end
                 end
@@ -79,6 +94,7 @@ parfor g=1:n_graphs
         end
     end
     err(:,:,:,:,:,g) = mean(err_g,1);
+    fsc(:,:,:,:,:,g) = mean(fsc_g,1);
 end
 t = toc;
 disp(['--- ' num2str(t/3600) ' hours'])
@@ -87,3 +103,8 @@ mean_err = mean(err,7);
 min(mean_err(:))
 median_err = median(err,7);
 min(median_err(:))
+
+mean_fsc = mean(fsc,7);
+max(mean_fsc(:))
+median_err = median(fsc,7);
+max(median_fsc(:))
