@@ -38,7 +38,7 @@ for i=1:max_iters
             % Graph similarity penalties
             for j=1:(k-1)
                f0 = f0 + beta*norm(vec(Ao(:,:,k)-Ao(:,:,j)),1) +...
-                   eta*sum(norms(Pp(:,:,k)+Pm(:,:,k) - Pp(:,:,j)-Pm(:,:,j),1));
+                   eta*sum(norms(Pp(:,:,k)+Pm(:,:,k) - Pp(:,:,j)-Pm(:,:,j),2));
             end
         end
 
@@ -55,7 +55,7 @@ for i=1:max_iters
     diff_Ao = norm(vec(Ao-Ao_prev),2)^2/norm_Ao_prev;
     f0_diff = abs(f0 - f0_prev);
     Ao_prev = Ao;
-    f0_prev = f0;
+    
     comm = norm(Co(:,:,k)*Ao(:,:,k)+P(:,:,k)...
                 -Ao(:,:,k)*Co(:,:,k)-P(:,:,k)','fro');
     
@@ -66,10 +66,11 @@ for i=1:max_iters
     end
     
     % Stop condition
-    if f0_diff < 1e-3
+    if f0_diff < 1e-2
         if verb
             disp('Convergence achieved!')
         end
         break
     end
+    f0_prev = f0;
 end

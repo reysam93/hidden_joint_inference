@@ -3,28 +3,30 @@ rng(10)
 addpath(genpath('utils'));
 addpath(genpath('opt'));
 
-n_graphs = 5;
+n_graphs = 20;
 K = 3;
 N = 20;
 O = 19;
 p = 0.2;
 pert_links = 3;
 L = 3;
-M = 1e3;
-sampled = false;
-norm_C = true;
-
-max_iters = 10;
-regs = struct();
+M = 1e5;
+sampled = true;
+norm_C = false;
 
 % For H=1, C perfect --> sale demasiado sparse las oculas, 10^-4
-regs.alpha = 1e-5;     % sparse A
-regs.gamma = .1;  % glasso pennalty
-regs.delta1 = 1e-3; % sparse A
-regs.delta2 = 1e-3; % sparse A
-regs.beta = .25;     % Ao similarity 
-regs.eta = .1;      % Aoh similarity
-regs.mu = 1e7;      % Commutativity
+max_iters = 15;
+regs = struct();
+regs.alpha   = 1;
+regs.gamma   = 50;
+regs.beta    = 50;
+regs.eta     = 50;
+regs.mu      = 1000;
+regs.delta1  = 1e-3;
+
+regs.lambda  = 5;
+regs.epsilon = 1e-6;
+regs.delta2  = 1e-3;
 
 hid_nodes = 'min';
 
@@ -45,18 +47,18 @@ for g=1:n_graphs
     % Same observed/hidden nodes for all graphs
     [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
     
-%     links_column1 = sum(As(n_o,n_o(1),:));
-%     As = As./links_column1;
-    
     % Create covariances
     Cs = zeros(N,N,K);
     for k=1:K
         h = rand(L,1)*2-1;
-        h = h/norm(h,1);
+%         h = h/norm(h,1);
+        
         H = zeros(N);
         for l=1:L
             H = H + h(l)*As(:,:,k)^(l-1);
         end
+        disp(['   - k: ' num2str(k) ' h: ' num2str(h') ' norm(H): '...
+            num2str(norm(H(:),2))])
         
         if sampled
             X = H*randn(N,M);
@@ -85,21 +87,21 @@ for g=1:n_graphs
         '  -  norm(CoAo-AoCo) = ' num2str(comm_obs)])
         
     [Ao_hat,P_hat] = estA_pgl_colsp_rw2(Co,N-O,regs,max_iters,true);
-    
-%     Ao_hat_sep = zeros(O,O,K);
-%     for k=1:K
-%         [Ao_hat_sep(:,:,k),~,~] = estA_pgl_colsp_rw2(Co(:,:,k),N-O,regs);
-%     end
+%     [Ao_hat,P_hat] = estA_pgl_colsp_rw(Co,N-O,regs,true);
+    Ao_hat_sep = zeros(O,O,K);
+    for k=1:K
+        [Ao_hat_sep(:,:,k),~,~] = estA_pgl_colsp_rw2(Co(:,:,k),N-O,regs);
+    end
     
     % Set maximum value to 1
     Ao_hat = Ao_hat./max(max(Ao_hat));
-%     Ao_hat_sep = Ao_hat_sep./max(max(Ao_hat_sep));
+    Ao_hat_sep = Ao_hat_sep./max(max(Ao_hat_sep));
     
     for k=1:K
         norm_Ao = norm(Ao(:,:,k),'fro')^2;
         
         err_joint(k,g) = norm(Ao(:,:,k)-Ao_hat(:,:,k),'fro')^2/norm_Ao;
-%         err_sep(k,g) = norm(Ao(:,:,k)-Ao_hat_sep(:,:,k),'fro')^2/norm_Ao;
+        err_sep(k,g) = norm(Ao(:,:,k)-Ao_hat_sep(:,:,k),'fro')^2/norm_Ao;
         
         if g == 1 || g==5
             figure();
@@ -122,10 +124,11 @@ disp(['--- ' num2str(t/60) ' minutes'])
 
 %% Print summary
 mean_err_joint = mean(err_joint,2);
-% mean_err_sep = mean(err_sep,2);
+mean_err_sep = mean(err_sep,2);
 
 figure();
-subplot(1,2,1);plot(mean(norms_Ao));subplot(1,2,2);plot(mean(norms_Co))
+subplot(1,2,1);plot(mean(norms_Ao));title('Norm Ao')
+subplot(1,2,2);plot(mean(norms_Co));title('Norm Co')
 
 figure()
 hold on
@@ -134,15 +137,15 @@ plot(err_joint(2,:))
 plot(err_joint(3,:))
 
 disp(['Joint err: ' num2str(mean_err_joint')])
-% disp(['Separ err: ' num2str(mean_err_sep')])
+disp(['Separ err: ' num2str(mean_err_sep')])
 disp(['Mean joint err: ' num2str(mean(mean_err_joint))])
-% disp(['Mean separ err: ' num2str(mean(mean_err_sep))])
+disp(['Mean separ err: ' num2str(mean(mean_err_sep))])
 
 median_err_joint = median(err_joint,2);
 median_err_sep = median(err_sep,2);
 disp(['Joint err: ' num2str(median_err_joint')])
-% disp(['Separ err: ' num2str(mean_err_sep')])
+disp(['Separ err: ' num2str(mean_err_sep')])
 disp(['Median joint err: ' num2str(mean(median_err_joint))])
-% disp(['Median separ err: ' num2str(mean(median_err_sep))])
+disp(['Median separ err: ' num2str(mean(median_err_sep))])
 
 

@@ -1,7 +1,7 @@
-function [precision,recall,f,NMI,num_of_edges] = graph_learning_perf_eval(L_0,L)
+function [precision,recall,f,NMI,num_of_edges] = graph_learning_perf_eval(A_0,A)
 % evaluate the performance of graph learning algorithms
 
-if sum(isnan(L))>0
+if sum(isnan(A))>0
     precision = 0;
     recall = 0;
     f = 0;
@@ -10,11 +10,11 @@ if sum(isnan(L))>0
     return
 end
 
-L_0tmp = L_0-diag(diag(L_0));
-edges_groundtruth = squareform(L_0tmp)~=0;
+A_0tmp = A_0-diag(diag(A_0));
+edges_groundtruth = squareform(A_0tmp)~=0;
 
-Ltmp = L-diag(diag(L));
-edges_learned = squareform(Ltmp)~=0;
+Atmp = A-diag(diag(A));
+edges_learned = squareform(Atmp)~=0;
 
 
 num_of_edges = sum(edges_learned);
