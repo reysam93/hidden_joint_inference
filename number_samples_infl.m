@@ -10,13 +10,14 @@ O = 19;
 p = 0.2;
 pert_links = 3;
 F = 3;
-Ms = [1e3 1e5] %[1e2 1e3 1e4 1e5];
+Ms = [1e2 1e3 1e4 1e5];
 hid_nodes = 'min';
+th = 0.3;
 
 leg = {'G1, joint','G2, joint','G3, joint','G1, sep','G2, sep','G3, sep'};
 
 
-max_iters = 15;
+max_iters = 10;
 regs = struct();
 regs.alpha   = 1;       % Sparsity of S
 regs.gamma   = 50;      % Group Lasso
@@ -129,10 +130,21 @@ fsc_sep = zeros(K,length(Ms),n_graphs);
 for g=1:n_graphs
     for i=1:length(Ms)
         for k=1:K
+            Ao_th = Aos(:,:,k,g);
+            Ao_th(Ao_th >= th) = 1;
+            Ao_th(Ao_th < th) = 0;
+            
+            Ao_j_th = Aos_joint(:,:,k,i,g);
+            Ao_j_th(Ao_j_th >= th) = 1;
+            Ao_j_th(Ao_j_th < th) = 0;
+
+            Ao_s_th = Aos_sep(:,:,k,i,g);
+            Ao_s_th(Ao_s_th >= th) = 1;
+            Ao_s_th(Ao_s_th < th) = 0;
             [~,~,fsc_joint(k,i,g),~,~] = ...
-                graph_learning_perf_eval(Aos(:,:,k,g),Aos_joint(:,:,k,i,g));
+                graph_learning_perf_eval(Ao_th,Ao_j_th);
             [~,~,fsc_sep(k,i,g),~,~] = ...
-                graph_learning_perf_eval(Aos(:,:,k,g),Aos_sep(:,:,k,i,g));
+                graph_learning_perf_eval(Ao_th,Ao_s_th);
         end
     end
 end
@@ -142,7 +154,7 @@ mean_fsc_sep = mean(fsc_sep,3);
 med_fsc_joint = median(fsc_joint,3);
 med_fsc_sep = median(fsc_sep,3);
 
-% Mean error
+% Mean fsc
 figure();
 semilogx(Ms,mean_fsc_joint(1,:),'-o'); hold on
 semilogx(Ms,mean_fsc_joint(2,:),'-x'); hold on
@@ -155,7 +167,7 @@ ylabel('Mean error')
 legend(leg)
 grid on; axis tight
 
-% Median error
+% Median fsc
 figure();
 semilogx(Ms,med_fsc_joint(1,:),'-o'); hold on
 semilogx(Ms,med_fsc_joint(2,:),'-x'); hold on
