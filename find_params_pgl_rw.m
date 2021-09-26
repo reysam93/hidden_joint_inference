@@ -98,13 +98,15 @@ parfor g=1:n_graphs
 end
 t = toc;
 disp(['--- ' num2str(t/3600) ' hours'])
-%%
+%% Display results
 mean_err = mean(err,6);
-min(mean_err(:))
 median_err = median(err,6);
-min(median_err(:))
-
 mean_fsc = mean(fsc,6);
-max(mean_fsc(:))
-median_err = median(fsc,6);
-max(median_fsc(:))
+median_fsc = median(fsc,6);
+rec_graphs = sum(fsc==1,6)/n_graphs;
+
+disp(['Min mean err: ' num2str(min(mean_err(:)))])
+disp(['Min median err: ' num2str(min(median_err(:)))])
+disp(['Max mean fsc: ' num2str(max(mean_fsc(:)))])
+disp(['Max median err: ' num2str(max(median_fsc(:)))])
+disp(['Max rec: ' num2str(max(rec_graphs(:)))])
