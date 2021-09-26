@@ -65,7 +65,6 @@ parfor g=1:n_graphs
             Cs(:,:,k) = X(:,1:M,k)*X(:,1:M,k)'/M;
         end
         Co = Cs(n_o,n_o,:);
-%         Coh = Cs(n_o,n_h,:);
         
         % Joint inference
         Ao_hat_j = estA_pgl_colsp_rw2(Co,N-O,regs,max_iters);
@@ -129,7 +128,7 @@ ylabel('Median error')
 legend(leg)
 grid on; axis tight
 
-%% Plot fscore
+%% Plot fscore and recovered graphs
 fsc_joint = zeros(K,length(Ms),n_graphs);
 fsc_sep = zeros(K,length(Ms),n_graphs);
 for g=1:n_graphs
@@ -159,6 +158,9 @@ mean_fsc_sep = mean(fsc_sep,3);
 med_fsc_joint = median(fsc_joint,3);
 med_fsc_sep = median(fsc_sep,3);
 
+rec_joint = sum(fsc_joint == 1,3)/n_graphs;
+rec_sep= sum(fsc_sep == 1,3)/n_graphs;
+
 % Mean fsc
 figure();
 semilogx(Ms,mean_fsc_joint(1,:),'-o'); hold on
@@ -185,3 +187,15 @@ ylabel('Median fscore')
 legend(leg)
 grid on; axis tight
 
+% Recovered graphs
+figure();
+semilogx(Ms,rec_joint(1,:),'-o'); hold on
+semilogx(Ms,rec_joint(2,:),'-x'); hold on
+semilogx(Ms,rec_joint(3,:),'-v'); hold on
+semilogx(Ms,rec_sep(1,:),'--o'); hold on
+semilogx(Ms,rec_sep(2,:),'--x'); hold on
+semilogx(Ms,rec_sep(3,:),'--v'); hold off
+xlabel('Number of samples')
+ylabel('Recovered graphs')
+legend(leg)
+grid on; axis tight

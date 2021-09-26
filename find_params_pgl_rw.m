@@ -78,11 +78,11 @@ parfor g=1:n_graphs
                             norm_Ao = norm(Ao(:,:,n),'fro')^2;
                             err_g(n,m,f,k,j,o) = norm(diff_Ao(:,:,n),'fro')^2/norm_Ao;
                             
-                            Ao_th = Ao(:,:,k);
+                            Ao_th = Ao(:,:,n);
                             Ao_th(Ao_th >= th) = 1;
                             Ao_th(Ao_th < th) = 0;
                             
-                            Ao_hat_th = Ao_hat(:,:,k);
+                            Ao_hat_th = Ao_hat(:,:,n);
                             Ao_hat_th(Ao_hat_th >= th) = 1;
                             Ao_hat_th(Ao_hat_th < th) = 0;
                             [~,~,fsc_g(n,m,f,k,j,o),~,~] = ...
