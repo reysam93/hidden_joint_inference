@@ -10,9 +10,9 @@ K = 3;
 N = 20;
 O = 19;
 p = 0.2;
-F = 4;
+F = 3;
 pert_links = 3;
-Ms = [1e3 1e4 1e5];
+Ms = logspace(2,5,7);
 hid_nodes = 'min';
 th = 0.3;
 
@@ -33,7 +33,7 @@ tic
 Aos = zeros(O,O,K,n_graphs);
 Aos_joint = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 Aos_sep = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
-for g=1:n_graphs
+parfor g=1:n_graphs
     disp(['G: ' num2str(g)])
     
     % Create graphs and get hidden nodes
@@ -85,8 +85,8 @@ for g=1:n_graphs
         end
     end
     Aos(:,:,:,g) = Ao;
-    Aos_joint(:,:,:,:,j,g) = Aos_joint_g;
-    Aos_sep(:,:,:,:,j,g) = Aos_sep_g;
+    Aos_joint(:,:,:,:,:,g) = Aos_joint_g;
+    Aos_sep(:,:,:,:,:,g) = Aos_sep_g;
 end
 t = toc;
 disp(['----- ' num2str(t/3600) ' hours -----'])
@@ -129,6 +129,7 @@ mean_err_joint = squeeze(mean(mean(err_joint,3),4));
 mean_err_sep = squeeze(mean(mean(err_sep,3),4));
 med_err_joint = squeeze(median(median(err_joint,3),4));
 med_err_sep = squeeze(median(median(err_sep,3),4));
+
 rec_joint = sum(sum(err_joint <= .1,3),4)/(n_graphs*sig_trials);
 rec_sep= sum(sum(err_sep <= .1,3),4)/(n_graphs*sig_trials);
 
