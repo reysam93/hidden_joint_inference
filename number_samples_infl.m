@@ -102,7 +102,7 @@ for g=1:n_graphs
                 % Matrices normalized to maximum value 1
                 err_joint(k,i,j,g) = ...
                     norm(Aos(:,:,k,g)-Aos_joint(:,:,k,i,j,g),'fro')^2/norm_A;
-                err_sep(k,i,g) = ...
+                err_sep(k,i,j,g) = ...
                     norm(Aos(:,:,k,g)-Aos_sep(:,:,k,i,j,g),'fro')^2/norm_A;
                 
                 %             % Try error normalizing so first column adds to 1
@@ -129,6 +129,8 @@ mean_err_joint = squeeze(mean(mean(err_joint,3),4));
 mean_err_sep = squeeze(mean(mean(err_sep,3),4));
 med_err_joint = squeeze(median(median(err_joint,3),4));
 med_err_sep = squeeze(median(median(err_sep,3),4));
+rec_joint = sum(sum(err_joint <= .1,3),4)/(n_graphs*sig_trials);
+rec_sep= sum(sum(err_sep <= .1,3),4)/(n_graphs*sig_trials);
 
 % Mean error
 figure();
@@ -153,6 +155,19 @@ semilogx(Ms,med_err_sep(2,:),'--x'); hold on
 semilogx(Ms,med_err_sep(3,:),'--v'); hold off
 xlabel('Number of samples')
 ylabel('Median error')
+legend(leg)
+grid on; axis tight
+
+% Median error
+figure();
+semilogx(Ms,rec_joint(1,:),'-o'); hold on
+semilogx(Ms,rec_joint(2,:),'-x'); hold on
+semilogx(Ms,rec_joint(3,:),'-v'); hold on
+semilogx(Ms,rec_sep(1,:),'--o'); hold on
+semilogx(Ms,rec_sep(2,:),'--x'); hold on
+semilogx(Ms,rec_sep(3,:),'--v'); hold off
+xlabel('Number of samples')
+ylabel('Recovered graphs (err)')
 legend(leg)
 grid on; axis tight
 
@@ -226,6 +241,6 @@ semilogx(Ms,rec_sep(1,:),'--o'); hold on
 semilogx(Ms,rec_sep(2,:),'--x'); hold on
 semilogx(Ms,rec_sep(3,:),'--v'); hold off
 xlabel('Number of samples')
-ylabel('Recovered graphs')
+ylabel('Recovered graphs (fsc)')
 legend(leg)
 grid on; axis tight
