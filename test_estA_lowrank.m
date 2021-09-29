@@ -5,8 +5,8 @@ addpath(genpath('opt'));
 
 close all
 Ks = [3]; %----------------------
-N = 32;
-O = 31;   %----------------------
+N = 20;
+O = 19;   %----------------------
 HH = N-O;
 p = 0.2;
 pert_links = 3;
@@ -14,7 +14,7 @@ L = 3;
 M = 1e3;
 sampled = false;
 Ctype = 'Cmrf';
-graphs = [7 9 12];
+%graphs = [7 9 12];
 
 Cprms.L = L;
 Cprms.M = M;
@@ -32,7 +32,7 @@ prms.delta2 = 1e-3;
 prms.max_iters = 10;
 
 hid_nodes = 'min';
-nG = 1;
+nG = 24;
 %models = {'baseline','lowrank','lowrank rw','grouplasso','grouplasso rw'};
 %models = {'baseline rw','grouplasso rw','PNN rw'};
 models = {'grouplasso rw'};
@@ -43,7 +43,7 @@ err_joint = zeros(nG,numel(Ks),numel(models),HH,Ks(end));
 err_sep = zeros(nG,numel(Ks),numel(models),HH,Ks(end));
 tic
 A_T = cell(nG,numel(Ks),numel(models),HH);
-for g = 1:nG
+parfor g = 1:nG
     disp(['Graph: ' num2str(g)])
     A = generate_connected_ER(N,p);
     A_org = A;
@@ -54,8 +54,8 @@ for g = 1:nG
         model = models{m};
         regs = get_regs(model,prms);
         
-        %As = gen_similar_graphs(A,Ks(end),pert_links);
-        As = get_student_networks_graphs(graphs,N);
+        As = gen_similar_graphs(A,Ks(end),pert_links);
+        %As = get_student_networks_graphs(graphs,N);
         
         Cs = create_cov(As,Cprms);
         A_H = cell(numel(Ks),HH);
