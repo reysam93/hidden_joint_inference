@@ -1,15 +1,24 @@
 function [Ao,P] = estA_grouplasso_rw(Co, regs)
 Ao = [];
 P = [];
-
+verb = false;
 O = size(Co,1);
 K = size(Co,3);
 
-alpha = regs.alpha;%1
-gamma = regs.gamma;%100
-beta = regs.beta;%10
-eta = regs.eta;%1
-mu = regs.mu;%100
+%Cpoly
+% alpha = regs.alpha;
+% gamma = regs.gamma;
+% beta = regs.beta;
+% eta = regs.eta;
+% mu = regs.mu;
+
+%Cmrf
+alpha = 1e-2;%regs.alpha;
+gamma = 1e2;%regs.gamma;
+beta = 0;%regs.beta;
+eta = 0;%regs.eta;
+mu = 1e4;%regs.mu;
+
 max_iters = regs.max_iters;
 del1 = regs.delta1;
 
@@ -21,23 +30,41 @@ for i=1:max_iters
     cvx_begin quiet
         variable Ao(O,O,K) symmetric nonnegative
         variable P(O,O,K)
+        variable Pm(O,O,K) nonnegative
+        variable Pp(O,O,K) nonnegative
 
         f0 = vec(W_Ao)'*vec(Ao);
         for k=1:K
-            f0 = f0 + gamma*sum(norms(P(:,:,k),2)) + mu*norm(Co(:,:,k)*Ao(:,:,k)+P(:,:,k)-Ao(:,:,k)*Co(:,:,k)-P(:,:,k)','fro');
+            % Sparse penalties
+            f0 = f0 + gamma*sum(norms(P(:,:,k)));
+            % Commutativity penalty
+            f0 = f0 + mu*norm(Co(:,:,k)*Ao(:,:,k)+P(:,:,k)...
+                -Ao(:,:,k)*Co(:,:,k)-P(:,:,k)','fro');
+            % Graph similarity penalties
             for j=1:(k-1)
-               f0 = f0 + beta*norm(vec(Ao(:,:,k)-Ao(:,:,j)),1) + eta*norm(vec(P(:,:,k)-P(:,:,j)),1);
+               f0 = f0 + beta*norm(vec(Ao(:,:,k)-Ao(:,:,j)),1) +...
+                   eta*sum(norms(Pp(:,:,k)+Pm(:,:,k) - Pp(:,:,j)-Pm(:,:,j),1));
             end
         end
 
         minimize(f0)
         subject to
-            %norm(vec(pagemtimes(Co,Ao)+P-pagemtimes(Ao,Co)-P'),2)^2 <= eps^2;
+            P == Pp-Pm;
             for k=1:K
                 diag(Ao(:,:,k)) == 0;
                 sum(Ao(:,1,k))== 1;
             end
     cvx_end
-    %disp([num2str(norm(Ao_prev(:,:,1)-Ao(:,:,1),'fro')),'---', num2str(norm(Co(:,:,1)*Ao(:,:,1)+P(:,:,1)-Ao(:,:,1)*Co(:,:,1)-P(:,:,1)','fro'))])
+    norm_A = norm(vec(Ao),2)^2;
+    diff_A = norm(vec(Ao-Ao_prev),2)^2/norm_A;
     Ao_prev = Ao;
+%     figure()
+%     imagesc(Ao(:,:,1))
+    % Stop condition
+    if diff_A < 1e-3
+        if verb
+            disp('Convergence achieved!')
+        end
+        break
+    end
 end
