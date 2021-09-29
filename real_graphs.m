@@ -19,11 +19,11 @@ leg = {'LVGL,C_{mrf}','Pgl,C_{mrf}','LVGL,C_{poly}','Pgl,C_{poly}'};
 
 max_iters = 10;
 regs_mrf = struct();
-regs_mrf.alpha   = 1e-3;       % Sparsity of S
+regs_mrf.alpha   = 1;       % Sparsity of S
 regs_mrf.gamma   = 25;      % Group Lasso
-regs_mrf.beta    = 10;      % Similarity of S
-regs_mrf.eta     = 10;      % Similarity of P
-regs_mrf.mu      = 10;    % Commutative penalty
+regs_mrf.beta    = 1;      % Similarity of S
+regs_mrf.eta     = 25;      % Similarity of P
+regs_mrf.mu      = 100;    % Commutative penalty
 regs_mrf.delta1  = 1e-3;    % Small number for reweighted
 
 regs_poly = struct();
@@ -51,15 +51,15 @@ Ao = As(n_o,n_o,:);
 
 % True Cmrf
 Cs_mrf_true = zeros(N,N,K);
-figure();
+% figure();
 for k=1:K
     eigvals = eig(As(:,:,k));
     C_inv = (0.01-min(eigvals))*eye(N,N) + (0.9+0.1*rand(1,1))*As(:,:,k);
 %     C_inv = 2.5*eye(N) + (0.9 + 0.1*rand(1,1))*As(:,:,k);
-    subplot(2,3,k);imagesc(C_inv);colorbar()
+%     subplot(2,3,k);imagesc(C_inv);colorbar()
     
     Cs_mrf_true(:,:,k) = inv(C_inv);
-    subplot(2,3,k+K);imagesc(Cs_mrf_true(:,:,k));colorbar()
+%     subplot(2,3,k+K);imagesc(Cs_mrf_true(:,:,k));colorbar()
     Dc = eig(Cs_mrf_true(:,:,k));
     assert(min(Dc)>=0)        
 end
@@ -100,7 +100,7 @@ for g=1:signal_trials
         % Compute covariance
         Cs_poly = zeros(N,N,K);
         Cs_mrf = zeros(N,N,K);
-        figure()
+%         figure()
         for k=1:K
             Cs_mrf(:,:,k) = X_mrf(:,1:M,k)*X_mrf(:,1:M,k)'/M;
             Cs_poly(:,:,k) = X_poly(:,1:M,k)*X_poly(:,1:M,k)'/M;
@@ -108,8 +108,8 @@ for g=1:signal_trials
 %             Cs_mrf(:,:,k) = Cs_mrf_true(:,:,k);
 %             Cs_poly(:,:,k) = H(:,:,k)*H(:,:,k)';
             
-            subplot(2,3,k);imagesc(Cs_mrf(:,:,k));colorbar()
-            subplot(2,3,k+K);imagesc(Cs_poly(:,:,k));colorbar()
+%             subplot(2,3,k);imagesc(Cs_mrf(:,:,k));colorbar()
+%             subplot(2,3,k+K);imagesc(Cs_poly(:,:,k));colorbar()
             
 %             Cs_mrf(:,:,k)=Cs_mrf(:,:,k)/norm(Cs_mrf(:,:,k),'fro')*...
 %                 norm(Cs_poly(:,:,k),'fro');
@@ -148,11 +148,15 @@ for g=1:signal_trials
         if g==1 ||g==2 || g==10
             figure()
             for k=1:K
-                subplot(2,K,k)
+                subplot(3,K,k)
+                imagesc(Ao(:,:,k))
+                colorbar()
+                title(['True A: ' num2str(k)])
+                subplot(3,K,k+K)
                 imagesc(Aos_pgl_mrf_g(:,:,k,i))
                 colorbar()
                 title(['A: ' num2str(k)])
-                subplot(2,K,k+K)
+                subplot(3,K,k+2*K)
                 imagesc(P(:,:,k))
                 colorbar()
                 title(['P: ' num2str(k)])
