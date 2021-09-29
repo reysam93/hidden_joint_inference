@@ -4,12 +4,12 @@ addpath(genpath('utils'));
 addpath(genpath('opt'));
 
 graphs = [7 9 12];
-sig_trials = 30;
+sig_trials = 2;%30;
 K = length(graphs);
 N = 32;
 O = 31;
 F = 4;
-Ms = round(logspace(2,6,9));
+Ms = [1e3 1e5]; %round(logspace(2,6,9));
 max_M = Ms(end);
 hid_nodes = 'min';
 max_iters = 10;
@@ -41,11 +41,12 @@ end
 tic
 Aos_joint = zeros(O,O,K,length(Ms),sig_trials);
 Aos_sep = zeros(O,O,K,length(Ms),sig_trials);
-for j=1:sig_trials
+parfor j=1:sig_trials
+    H_loop = H;
     % Generate signals X
     X = zeros(N,max_M,K);
     for k=1:K
-        X(:,:,k) = H(:,:,k)*randn(N,max_M);
+        X(:,:,k) = H_loop(:,:,k)*randn(N,max_M);
     end
     
     Aos_joint_t = zeros(O,O,K,length(Ms));
@@ -72,9 +73,9 @@ for j=1:sig_trials
             Aos_sep_t(:,:,k,i) = Ao_hat_s./max(max(Ao_hat_s));
         end
     end
+    Aos_joint(:,:,:,:,j) = Aos_joint_t;
+    Aos_sep(:,:,:,:,j) = Aos_sep_t;
 end
-Aos_joint(:,:,:,:,j) = Aos_joint_t;
-Aos_sep(:,:,:,:,j) = Aos_sep_t;
 
 t = toc;
 disp(['----- ' num2str(t/3600) ' hours -----'])
