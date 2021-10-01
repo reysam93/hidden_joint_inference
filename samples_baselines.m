@@ -12,15 +12,16 @@ O = 19;
 p = 0.2;
 F = 3;
 pert_links = 3;
-Ms = round(logspace(2,5,4));
+Ms = round(logspace(2,6,9));
 hid_nodes = 'min';
 max_iters = 10;
 th = 0.3;
 
-leg = {'LVGL,C_{mrf}','Pgl,C_{mrf}','LVGL,C_{poly}','Pgl,C_{poly}'};
+leg = {'LVGL,C_{mrf}','GGL,C_{mrf}','FGL,C_{mrf}','Pgl,C_{mrf}',...
+    'LVGL,C_{poly}','GGL,C_{poly}','FGL,C_{poly}','Pgl,C_{poly}'};
 
 regs_lvgl_mrf = struct();
-regs_lvgl_mrf.alpha = 1e-3;
+regs_lvgl_mrf.alpha = 1e-2;
 regs_lvgl_mrf.beta = 1e-3;
 
 regs_mrf = struct();
@@ -32,8 +33,8 @@ regs_mrf.mu      = 1e6;    % Commutative penalty
 regs_mrf.delta1  = 1e-3;    % Small number for reweighted
 
 regs_lvgl_poly = struct();
-regs_lvgl_poly.alpha = 1e-3; %1e-5;
-regs_lvgl_poly.beta = 1e-3; %1e-2;
+regs_lvgl_poly.alpha = 5e-3;
+regs_lvgl_poly.beta = 5e-3;
 
 regs_poly = struct();
 regs_poly.alpha   = 1;       % Sparsity of S
@@ -42,6 +43,14 @@ regs_poly.beta    = 10;      % Similarity of S
 regs_poly.eta     = 10;      % Similarity of P
 regs_poly.mu      = 1e3;    % Commutative penalty
 regs_poly.delta1  = 1e-3;    % Small number for reweighted
+
+regs_ggl_mrf = struct();
+regs_ggl_mrf.lambda1 = 1e-3;
+regs_ggl_mrf.lambda2 = 1e-3;
+
+regs_ggl_poly = struct();
+regs_ggl_poly.lambda1 = 1e-1;
+regs_ggl_poly.lambda2 = 1e-1;
 
 max_M = Ms(end);
 
@@ -52,6 +61,11 @@ Aos_lvgl_mrf = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 Aos_pgl_mrf = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 Aos_lvgl_poly = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 Aos_pgl_poly = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
+Aos_ggl_mrf = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
+Aos_fgl_mrf = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
+Aos_ggl_poly = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
+Aos_fgl_poly = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
+
 parfor g=1:n_graphs
     disp(['G: ' num2str(g)])
     
@@ -83,6 +97,11 @@ parfor g=1:n_graphs
     Aos_pgl_mrf_g = zeros(O,O,K,length(Ms),sig_trials);
     Aos_lvgl_poly_g = zeros(O,O,K,length(Ms),sig_trials);
     Aos_pgl_poly_g = zeros(O,O,K,length(Ms),sig_trials);
+
+    Aos_ggl_mrf_g = zeros(O,O,K,length(Ms),sig_trials);
+    Aos_fgl_mrf_g = zeros(O,O,K,length(Ms),sig_trials);
+    Aos_ggl_poly_g = zeros(O,O,K,length(Ms),sig_trials);
+    Aos_fgl_poly_g = zeros(O,O,K,length(Ms),sig_trials);
     for j=1:sig_trials
         % Generate signals X
         X_mrf = zeros(N,max_M,K);
@@ -121,6 +140,24 @@ parfor g=1:n_graphs
                 Aos_lvgl_poly_g(:,:,k,i,j) = Ao_hat./max(max(Ao_hat));
             end
             
+            %%%% Estimates of Group-GL %%%%
+            % With mrf
+            Ao_hat = gglasso(Co_mrf,regs_ggl_mrf);
+            Aos_ggl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+
+            % With C poly
+            Ao_hat = gglasso(Co_poly,regs_ggl_poly);
+            Aos_ggl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+
+            %%%% Estimates of Fusion-GL %%%%
+            % With mrf
+            Ao_hat = fglasso(Co_mrf,regs_ggl_mrf);
+            Aos_fgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+
+            % With C poly
+            Ao_hat = fglasso(Co_poly,regs_ggl_poly);
+            Aos_fgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+
             %%%% Estimates of Pgl %%%%
             % With mrf
             [Ao_hat,P_mrf_g(:,:,:,i,j)] = estA_pgl_colsp_rw2(Co_mrf,N-O,regs_mrf,max_iters);
@@ -137,6 +174,10 @@ parfor g=1:n_graphs
     Aos_pgl_mrf(:,:,:,:,:,g) = Aos_pgl_mrf_g;
     Aos_lvgl_poly(:,:,:,:,:,g) = Aos_lvgl_poly_g;
     Aos_pgl_poly(:,:,:,:,:,g) = Aos_pgl_poly_g;
+    Aos_ggl_mrf(:,:,:,:,:,g) = Aos_ggl_mrf_g;
+    Aos_fgl_mrf(:,:,:,:,:,g) = Aos_fgl_mrf_g;
+    Aos_ggl_poly(:,:,:,:,:,g) = Aos_ggl_poly_g;
+    Aos_fgl_poly(:,:,:,:,:,g) = Aos_fgl_poly_g;
 end
 t = toc;
 disp(['----- ' num2str(t/3600) ' hours -----'])
@@ -157,29 +198,37 @@ for g=1:n_graphs
                     norm(Aos(:,:,k,g)-Aos_lvgl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
                 err(k,i,4,j,g) = ...
                     norm(Aos(:,:,k,g)-Aos_pgl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
+
+                err(k,i,5,j,g) = ...
+                    norm(Aos(:,:,k,g)-Aos_ggl_mrf(:,:,k,i,j,g),'fro')^2/norm_A;
+                err(k,i,6,j,g) = ...
+                    norm(Aos(:,:,k,g)-Aos_fgl_mrf(:,:,k,i,j,g),'fro')^2/norm_A;
+                err(k,i,7,j,g) = ...
+                    norm(Aos(:,:,k,g)-Aos_ggl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
+                err(k,i,8,j,g) = ...
+                    norm(Aos(:,:,k,g)-Aos_fgl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
             end
         end
     end
 end
 
-for g=1:min(n_graphs,7)
-    err_graph = squeeze(mean(err(:,end,2,1,:),1));
-    figure()
-    for k=1:K
-        subplot(3,3,k)
-        imagesc(Aos_pgl_mrf(:,:,k,end,1,g));colorbar();title('Pgl mrf')
-        
-        subplot(3,3,k+K)
-        %     imagesc(Aos_pgl_poly(:,:,k,end,1,g));colorbar();title('Pgl poly')
-        imagesc(Aos(:,:,k,g));colorbar();title('True A')
-        
-        subplot(3,3,k+K*2)
-        imagesc(P_mrf(:,:,k,end,1,g));colorbar();title('P')
-        
-    end
-end
+% for g=1:min(n_graphs,7)
+%     err_graph = squeeze(mean(err(:,end,2,1,:),1));
+%     figure()
+%     for k=1:K
+%         subplot(3,3,k)
+%         imagesc(Aos_pgl_mrf(:,:,k,end,1,g));colorbar();title('Pgl mrf')
+%         
+%         subplot(3,3,k+K)
+%         %     imagesc(Aos_pgl_poly(:,:,k,end,1,g));colorbar();title('Pgl poly')
+%         imagesc(Aos(:,:,k,g));colorbar();title('True A')
+%         
+%         subplot(3,3,k+K*2)
+%         imagesc(P_mrf(:,:,k,end,1,g));colorbar();title('P') 
+%     end
+% end
 
-figure();plot(squeeze(mean(err(:,end,2,1,:),1)))
+% figure();plot(squeeze(mean(err(:,end,2,1,:),1)))
 
 mean_err = squeeze(mean(mean(mean(err,1),4),5));
 med_err = squeeze(median(median(mean(err,1),4),5));
@@ -189,10 +238,14 @@ med_err = squeeze(median(median(mean(err,1),4),5));
 
 % Mean error
 figure();
-semilogx(Ms,mean_err(:,1),'-x'); hold on
-semilogx(Ms,mean_err(:,2),'-o'); hold on
-semilogx(Ms,mean_err(:,3),'--x'); hold on
-semilogx(Ms,mean_err(:,4),'--o'); hold off
+semilogx(Ms,mean_err(1),'-x'); hold on
+semilogx(Ms,mean_err(2),'-o'); hold on
+semilogx(Ms,mean_err(3),'--x'); hold on
+semilogx(Ms,mean_err(4),'--o'); hold on
+semilogx(Ms,mean_err(5),'-v'); hold on
+semilogx(Ms,mean_err(6),'-s'); hold on
+semilogx(Ms,mean_err(7),'--v'); hold on
+semilogx(Ms,mean_err(8),'--s'); hold off
 xlabel('Number of samples')
 ylabel('Mean error')
 legend(leg)
