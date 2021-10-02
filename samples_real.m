@@ -4,17 +4,18 @@ addpath(genpath('utils'));
 addpath(genpath('opt'));
 
 graphs = [7 9 12];
-sig_trials = 2;%30;
+sig_trials = 100;
 K = length(graphs);
 N = 32;
 O = 31;
 F = 4;
-Ms = [1e3 1e5]; %round(logspace(2,6,9));
+Ms =  round(logspace(2,6,9));
 max_M = Ms(end);
 hid_nodes = 'min';
 max_iters = 10;
 
-leg = {'G1 joint','G2 joint','G3 joint','G1 sep','G2 sep','G3 sep'};
+leg = {'G1 joint','G2 joint','G3 joint',...
+    'G1 sep','G2 sep','G3 sep'};
 
 regs = struct();
 regs.alpha   = 1;       % Sparsity of S
@@ -42,11 +43,11 @@ tic
 Aos_joint = zeros(O,O,K,length(Ms),sig_trials);
 Aos_sep = zeros(O,O,K,length(Ms),sig_trials);
 parfor j=1:sig_trials
-    H_loop = H;
+    disp(['Trial: ' num2str(j)])
     % Generate signals X
     X = zeros(N,max_M,K);
     for k=1:K
-        X(:,:,k) = H_loop(:,:,k)*randn(N,max_M);
+        X(:,:,k) = H(:,:,k)*randn(N,max_M);
     end
     
     Aos_joint_t = zeros(O,O,K,length(Ms));
@@ -67,6 +68,7 @@ parfor j=1:sig_trials
         % Joint inference
         Ao_hat_j = estA_pgl_colsp_rw2(Co,N-O,regs,max_iters);
         Aos_joint_t(:,:,:,i) = Ao_hat_j./max(max(Ao_hat_j));
+        
         % Separate inference
         for k=1:K
             Ao_hat_s = estA_pgl_colsp_rw2(Co(:,:,k),N-O,regs,max_iters);
@@ -96,49 +98,30 @@ for j=1:sig_trials
     end
 end
 
-mean_err_joint = mean(err_joint,3);
-mean_err_sep = mean(err_sep,3);
-med_err_joint = median(err_joint,3);
-med_err_sep = median(err_sep,3);
+mean_errj = mean(err_joint,3);
+mean_errs = mean(err_sep,3);
 
-rec_joint = sum(err_joint <= .1,3)/(sig_trials);
-rec_sep= sum(err_sep <= .1,3)/(sig_trials);
+% Plot properties
+mark_s = 8;
+line_w = 2;
 
 % Mean error
+set(0,'defaultTextInterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex');
+set(groot, 'defaultLegendInterpreter','latex');
 figure();
-semilogx(Ms,mean_err_joint(1,:),'-o'); hold on
-semilogx(Ms,mean_err_joint(2,:),'-x'); hold on
-semilogx(Ms,mean_err_joint(3,:),'-v'); hold on
-semilogx(Ms,mean_err_sep(1,:),'--o'); hold on
-semilogx(Ms,mean_err_sep(2,:),'--x'); hold on
-semilogx(Ms,mean_err_sep(3,:),'--v'); hold off
-xlabel('Number of samples')
+semilogx(Ms,mean_errj(1,:),'-o','LineWidth',line_w,'MarkerSize',mark_s);hold on
+semilogx(Ms,mean_errj(2,:),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_errj(3,:),'-v','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_errs(1,:),':o','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_errs(2,:),':x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_errs(3,:),':v','LineWidth',line_w,'MarkerSize',mark_s); hold off
+xlabel('(c) Number of samples')
 ylabel('Mean error')
-legend(leg)
-grid on; axis tight
+% legend(leg,'Location','northeast','NumColumns',2,'Color','none')
+legend(leg,'Location','northeast','NumColumns',2)
+grid on;
+ylim([0 1])
+set(gca,'FontSize',14);
+set(gcf, 'PaperPositionMode', 'auto')
 
-% Median error
-figure();
-semilogx(Ms,med_err_joint(1,:),'-o'); hold on
-semilogx(Ms,med_err_joint(2,:),'-x'); hold on
-semilogx(Ms,med_err_joint(3,:),'-v'); hold on
-semilogx(Ms,med_err_sep(1,:),'--o'); hold on
-semilogx(Ms,med_err_sep(2,:),'--x'); hold on
-semilogx(Ms,med_err_sep(3,:),'--v'); hold off
-xlabel('Number of samples')
-ylabel('Median error')
-legend(leg)
-grid on; axis tight
-
-% Median error
-figure();
-semilogx(Ms,rec_joint(1,:),'-o'); hold on
-semilogx(Ms,rec_joint(2,:),'-x'); hold on
-semilogx(Ms,rec_joint(3,:),'-v'); hold on
-semilogx(Ms,rec_sep(1,:),'--o'); hold on
-semilogx(Ms,rec_sep(2,:),'--x'); hold on
-semilogx(Ms,rec_sep(3,:),'--v'); hold off
-xlabel('Number of samples')
-ylabel('Recovered graphs (err)')
-legend(leg)
-grid on; axis tight
