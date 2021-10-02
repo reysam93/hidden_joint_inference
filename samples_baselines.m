@@ -17,8 +17,8 @@ hid_nodes = 'min';
 max_iters = 10;
 th = 0.3;
 
-leg = {'LVGL,C_{mrf}','GGL,C_{mrf}','FGL,C_{mrf}','Pgl,C_{mrf}',...
-    'LVGL,C_{poly}','GGL,C_{poly}','FGL,C_{poly}','Pgl,C_{poly}'};
+leg = {'LVGL,C_{mrf}','GGL,C_{mrf}','FGL,C_{mrf}','PGL,C_{mrf}',...
+    'LVGL,C_{poly}','GGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}'};
 
 regs_lvgl_mrf = struct();
 regs_lvgl_mrf.alpha = 1e-2;
@@ -160,7 +160,7 @@ parfor g=1:n_graphs
 
             %%%% Estimates of Pgl %%%%
             % With mrf
-            [Ao_hat,P_mrf_g(:,:,:,i,j)] = estA_pgl_colsp_rw2(Co_mrf,N-O,regs_mrf,max_iters);
+            Ao_hat = estA_pgl_colsp_rw2(Co_mrf,N-O,regs_mrf,max_iters);
             Aos_pgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
             
             % With C poly
@@ -193,86 +193,43 @@ for g=1:n_graphs
                 err(k,i,1,j,g) = ...
                     norm(Aos(:,:,k,g)-Aos_lvgl_mrf(:,:,k,i,j,g),'fro')^2/norm_A;
                 err(k,i,2,j,g) = ...
-                    norm(Aos(:,:,k,g)-Aos_pgl_mrf(:,:,k,i,j,g),'fro')^2/norm_A;
-                err(k,i,3,j,g) = ...
-                    norm(Aos(:,:,k,g)-Aos_lvgl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
-                err(k,i,4,j,g) = ...
-                    norm(Aos(:,:,k,g)-Aos_pgl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
-
-                err(k,i,5,j,g) = ...
                     norm(Aos(:,:,k,g)-Aos_ggl_mrf(:,:,k,i,j,g),'fro')^2/norm_A;
-                err(k,i,6,j,g) = ...
+                err(k,i,3,j,g) = ...
                     norm(Aos(:,:,k,g)-Aos_fgl_mrf(:,:,k,i,j,g),'fro')^2/norm_A;
-                err(k,i,7,j,g) = ...
+                err(k,i,4,j,g) = ...
+                    norm(Aos(:,:,k,g)-Aos_pgl_mrf(:,:,k,i,j,g),'fro')^2/norm_A;
+                err(k,i,5,j,g) = ...
+                    norm(Aos(:,:,k,g)-Aos_lvgl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
+                err(k,i,6,j,g) = ...
                     norm(Aos(:,:,k,g)-Aos_ggl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
-                err(k,i,8,j,g) = ...
+                err(k,i,7,j,g) = ...
                     norm(Aos(:,:,k,g)-Aos_fgl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
+                err(k,i,8,j,g) = ...
+                    norm(Aos(:,:,k,g)-Aos_pgl_poly(:,:,k,i,j,g),'fro')^2/norm_A;
             end
         end
     end
 end
 
-% for g=1:min(n_graphs,7)
-%     err_graph = squeeze(mean(err(:,end,2,1,:),1));
-%     figure()
-%     for k=1:K
-%         subplot(3,3,k)
-%         imagesc(Aos_pgl_mrf(:,:,k,end,1,g));colorbar();title('Pgl mrf')
-%         
-%         subplot(3,3,k+K)
-%         %     imagesc(Aos_pgl_poly(:,:,k,end,1,g));colorbar();title('Pgl poly')
-%         imagesc(Aos(:,:,k,g));colorbar();title('True A')
-%         
-%         subplot(3,3,k+K*2)
-%         imagesc(P_mrf(:,:,k,end,1,g));colorbar();title('P') 
-%     end
-% end
-
-% figure();plot(squeeze(mean(err(:,end,2,1,:),1)))
-
 mean_err = squeeze(mean(mean(mean(err,1),4),5));
-med_err = squeeze(median(median(mean(err,1),4),5));
 
-% rec_joint = sum(sum(err <= .1,4),5)/(n_graphs*sig_trials);
-% rec_sep= sum(sum(err <= .1,4),5)/(n_graphs*sig_trials);
+% Plot properties
+mark_s = 8;
+line_w = 2;
 
-% Mean error
 figure();
-semilogx(Ms,mean_err(1),'-x'); hold on
-semilogx(Ms,mean_err(2),'-o'); hold on
-semilogx(Ms,mean_err(3),'--x'); hold on
-semilogx(Ms,mean_err(4),'--o'); hold on
-semilogx(Ms,mean_err(5),'-v'); hold on
-semilogx(Ms,mean_err(6),'-s'); hold on
-semilogx(Ms,mean_err(7),'--v'); hold on
-semilogx(Ms,mean_err(8),'--s'); hold off
-xlabel('Number of samples')
+semilogx(Ms,mean_err(:,1),'--x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,2),'--v','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,3),'--s','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,4),'--o','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,6),'-v','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,7),'-s','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,8),'-o','LineWidth',line_w,'MarkerSize',mark_s); hold off
+xlabel('(b) Number of samples')
 ylabel('Mean error')
-legend(leg)
-grid on; axis tight
-
-% % Median error
-% figure();
-% semilogx(Ms,med_err_joint(1,:),'-o'); hold on
-% semilogx(Ms,med_err_joint(2,:),'-x'); hold on
-% semilogx(Ms,med_err_joint(3,:),'-v'); hold on
-% semilogx(Ms,med_err_sep(1,:),'--o'); hold on
-% semilogx(Ms,med_err_sep(2,:),'--x'); hold on
-% semilogx(Ms,med_err_sep(3,:),'--v'); hold off
-% xlabel('Number of samples')
-% ylabel('Median error')
-% legend(leg)
-% grid on; axis tight
-
-% % Median error
-% figure();
-% semilogx(Ms,rec_joint(1,:),'-o'); hold on
-% semilogx(Ms,rec_joint(2,:),'-x'); hold on
-% semilogx(Ms,rec_joint(3,:),'-v'); hold on
-% semilogx(Ms,rec_sep(1,:),'--o'); hold on
-% semilogx(Ms,rec_sep(2,:),'--x'); hold on
-% semilogx(Ms,rec_sep(3,:),'--v'); hold off
-% xlabel('Number of samples')
-% ylabel('Recovered graphs (err)')
-% legend(leg)
-% grid on; axis tight
+legend(leg,'Location','northeast')
+grid on
+% ylim([0 1.5])
+set(gca,'FontSize',14);
+set(gcf, 'PaperPositionMode', 'auto')
