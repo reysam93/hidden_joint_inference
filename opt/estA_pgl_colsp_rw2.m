@@ -25,8 +25,8 @@ for i=1:max_iters
     cvx_begin quiet
         variable Ao(O,O,K) symmetric nonnegative
         variable P(O,O,K)
-        variable Pm(O,O,K) nonnegative
-        variable Pp(O,O,K) nonnegative
+%         variable Pm(O,O,K) nonnegative
+%         variable Pp(O,O,K) nonnegative
 
         f0 = vec(W_Ao)'*vec(Ao);
         for k=1:K
@@ -38,16 +38,19 @@ for i=1:max_iters
             % Graph similarity penalties
             for j=1:(k-1)
                f0 = f0 + beta*norm(vec(Ao(:,:,k)-Ao(:,:,j)),1) +...
-                   eta*sum(norms(Pp(:,:,k)+Pm(:,:,k) - Pp(:,:,j)-Pm(:,:,j),2));
+                   eta*sum(norms([P(:,:,k); P(:,:,j)],2));
+%                    eta*sum(norms(Pp(:,:,k)+Pm(:,:,k) - Pp(:,:,j)-Pm(:,:,j),2));
+               
             end
         end
 
         minimize(f0)
         subject to
-            P == Pp-Pm;
+%             P == Pp-Pm;
             for k=1:K
                 diag(Ao(:,:,k)) == 0;
-                sum(Ao(:,1,k))== 1;
+%                 sum(Ao(:,1,k))== 1;
+                sum(Ao(:,:,k))>= 1;
             end
     cvx_end
 
