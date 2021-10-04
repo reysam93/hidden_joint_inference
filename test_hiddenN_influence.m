@@ -11,8 +11,8 @@ HH = N-O;
 p = 0.2;
 pert_links = 3;
 L = 3;
-M = 1e3;
-sampled = false;
+M = 1e4;
+sampled = true;
 
 regs = struct();
 regs.lambda = 1;
@@ -25,9 +25,9 @@ prms.delta2 = 1e-3;
 prms.max_iters = 10;
 
 hid_nodes = 'min';
-nG = 64;             %-----------------
+nG = 96;             %-----------------
 %models = {'baseline','lowrank','lowrank rw','grouplasso','grouplasso rw'};
-models = {'baseline rw','PNN rw','grouplasso rw','lowrank rw'};
+models = {'No hidden rw','PNN rw','PGN rw'};
 %models = {'baseline rw'};
 
 % Create graphs
