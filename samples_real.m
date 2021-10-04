@@ -4,12 +4,12 @@ addpath(genpath('utils'));
 addpath(genpath('opt'));
 
 graphs = [7 9 12];
-sig_trials = 100;
+sig_trials = 1;
 K = length(graphs);
 N = 32;
 O = 31;
 F = 4;
-Ms =  round(logspace(2,6,9));
+Ms = [1e3 1e4] %round(logspace(2,6,9));
 max_M = Ms(end);
 hid_nodes = 'min';
 max_iters = 10;
@@ -41,7 +41,7 @@ end
 tic
 Aos_joint = zeros(O,O,K,length(Ms),sig_trials);
 Aos_sep = zeros(O,O,K,length(Ms),sig_trials);
-parfor j=1:sig_trials
+for j=1:sig_trials
     disp(['Trial: ' num2str(j)])
     % Generate signals X
     X = zeros(N,max_M,K);
@@ -65,7 +65,7 @@ parfor j=1:sig_trials
         Co = Cs(n_o,n_o,:);
         
         % Joint inference
-        Ao_hat_j = estA_pgl_colsp_rw2(Co,N-O,regs,max_iters);
+        Ao_hat_j = estA_pgl_colsp_rw(Co,N-O,regs,max_iters);
         Aos_joint_t(:,:,:,i) = Ao_hat_j./max(max(Ao_hat_j));
         
         % Separate inference
