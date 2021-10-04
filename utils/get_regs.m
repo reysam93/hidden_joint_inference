@@ -1,4 +1,4 @@
-function regs = get_regs(model,prms)
+function regs = get_regs(model,prms,H)
     delta1 = prms.delta1;
     delta2 = prms.delta2;
     epsilon = prms.epsilon;
@@ -15,24 +15,37 @@ function regs = get_regs(model,prms)
         regs.gamma = 1e2; 
         regs.beta = 1;  
         regs.eta = 1;
-        regs.mu = 1e2; 
+        regs.mu = 1e2;    
+    elseif strcmp(model,'PNN rw')
+        regs.alpha = 1e-2;
+        regs.gamma = 100; 
+        regs.beta = 1;  
+        regs.mu = 1e2;
+        regs.eta = 1;       
     elseif strcmp(model,'grouplasso')
         regs.alpha = 1e-2;
         regs.gamma = 1;
         regs.mu = 1;
         regs.beta = 1;  
         regs.eta = 1;
-    elseif strcmp(model,'grouplasso rw')
-        regs.alpha = 1e-1;
-        regs.gamma = 1e2; 
-        regs.beta = 1;  
-        regs.eta = 1e-2;
-        regs.mu = 1e3; 
+    elseif strcmp(model,'PGL rw')
+        regs.alpha = 1e-2;%1e-2;
+        %regs.gamma = 5;%1e2; 
+        regs.beta = 1e-1;%1e-1; 
+        regs.eta = 1e-3;%1e-2;
+        regs.mu = 1e2;%1e1;
+        if H == 1
+            regs.gamma = 5;
+        elseif H == 2
+            regs.gamma = 2.64;
+        else
+            regs.gamma = 3.79;
+        end
     elseif strcmp(model,'baseline')
         regs.alpha = 1e-2; 
         regs.beta = 1e2;
         regs.epsilon = 1e-1;
-    elseif strcmp(model,'baseline rw')
+    elseif strcmp(model,'No hidden rw')
         regs.alpha = 1e-2; 
         regs.beta = 1e-1;
         regs.mu = 1;
