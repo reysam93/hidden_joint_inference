@@ -79,4 +79,7 @@ for i=1:max_iters
         disp(['Iter: ' num2str(i) '   Ao-Ao_prev: ' num2str(diff_Ao)...
             '   Comm: ' num2str(comm)])
     end
+    
+    cvx_status
+    cvx_optval
 end

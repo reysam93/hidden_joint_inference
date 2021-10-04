@@ -17,19 +17,19 @@ hid_nodes = 'min';
 max_iters = 10;
 th = 0.3;
 
-leg = {'LVGL,C_{mrf}','GGL,C_{mrf}','FGL,C_{mrf}','PGL,C_{mrf}',...
-    'LVGL,C_{poly}','GGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}'};
+leg = {'LVGL,$C_{mrf}$','GGL,$C_{mrf}$','FGL,$C_{mrf}$','PGL,$C_{mrf}$',...
+    'LVGL,$C_{poly}$','GGL,$C_{poly}$','FGL,$C_{poly}$','PGL,$C_{poly}$'};
 
 regs_lvgl_mrf = struct();
-regs_lvgl_mrf.alpha = 1e-2;
+regs_lvgl_mrf.alpha = 1e-3;
 regs_lvgl_mrf.beta = 1e-3;
 
 regs_mrf = struct();
 regs_mrf.alpha   = 1;       % Sparsity of S
-regs_mrf.gamma   = 1e4;      % Group Lasso
-regs_mrf.beta    = 5;      % Similarity of S
+regs_mrf.gamma   = 1e4;     % Group Lasso
+regs_mrf.beta    = 5;       % Similarity of S
 regs_mrf.eta     = 10;      % Similarity of P
-regs_mrf.mu      = 1e6;    % Commutative penalty
+regs_mrf.mu      = 1e6;     % Commutative penalty
 regs_mrf.delta1  = 1e-3;    % Small number for reweighted
 
 regs_lvgl_poly = struct();
@@ -38,10 +38,10 @@ regs_lvgl_poly.beta = 5e-3;
 
 regs_poly = struct();
 regs_poly.alpha   = 1;       % Sparsity of S
-regs_poly.gamma   = 110;      % Group Lasso
+regs_poly.gamma   = 110;     % Group Lasso
 regs_poly.beta    = 10;      % Similarity of S
 regs_poly.eta     = 10;      % Similarity of P
-regs_poly.mu      = 1e3;    % Commutative penalty
+regs_poly.mu      = 1e3;     % Commutative penalty
 regs_poly.delta1  = 1e-3;    % Small number for reweighted
 
 regs_ggl_mrf = struct();
@@ -65,7 +65,6 @@ Aos_ggl_mrf = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 Aos_fgl_mrf = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 Aos_ggl_poly = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 Aos_fgl_poly = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
-
 parfor g=1:n_graphs
     disp(['G: ' num2str(g)])
     
@@ -122,7 +121,7 @@ parfor g=1:n_graphs
             for k=1:K
                 Cs_mrf(:,:,k) = X_mrf(:,1:M,k)*X_mrf(:,1:M,k)'/M;
                 Cs_poly(:,:,k) = X_poly(:,1:M,k)*X_poly(:,1:M,k)'/M;
-                disp(['- k: ' num2str(k) ' norm Ck mrf '...
+                disp(['      - k: ' num2str(k) ' norm Ck mrf '...
                 num2str(norm(Cs_mrf(:,:,k),'fro')) ' norm Ck poly '...
                 num2str(norm(Cs_poly(:,:,k),'fro'))])
             end
@@ -160,11 +159,11 @@ parfor g=1:n_graphs
 
             %%%% Estimates of Pgl %%%%
             % With mrf
-            Ao_hat = estA_pgl_colsp_rw2(Co_mrf,N-O,regs_mrf,max_iters);
+            Ao_hat = estA_pgl_colsp_rw(Co_mrf,N-O,regs_mrf,max_iters);
             Aos_pgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
             
             % With C poly
-            [Ao_hat,~] = estA_pgl_colsp_rw2(Co_poly,N-O,regs_poly,max_iters);
+            [Ao_hat,~] = estA_pgl_colsp_rw(Co_poly,N-O,regs_poly,max_iters);
             Aos_pgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
         end
     end
@@ -217,19 +216,24 @@ mean_err = squeeze(mean(mean(mean(err,1),4),5));
 mark_s = 8;
 line_w = 2;
 
+leg(5) = []; % Only this!
+
+set(0,'defaultTextInterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex');
+set(groot, 'defaultLegendInterpreter','latex');
 figure();
-semilogx(Ms,mean_err(:,1),'--x','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,2),'--v','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,3),'--s','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,4),'--o','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,1),':x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,2),':v','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,3),':s','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,4),':o','LineWidth',line_w,'MarkerSize',mark_s); hold on
+% semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,6),'-v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,7),'-s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,8),'-o','LineWidth',line_w,'MarkerSize',mark_s); hold off
 xlabel('(b) Number of samples')
 ylabel('Mean error')
-legend(leg,'Location','northeast')
+legend(leg,'Location','east')
 grid on
-% ylim([0 1.5])
+ylim([0 1])
 set(gca,'FontSize',14);
 set(gcf, 'PaperPositionMode', 'auto')

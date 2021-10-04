@@ -1,4 +1,4 @@
-load('../results/data_exp1.mat');
+load('results/data_exp1_v1.mat');
 nG = size(A_T,1);
 nK = size(A_T,2);
 MM = size(A_T,3);
@@ -14,10 +14,9 @@ res_joint1 = zeros(nG,MM,HH,K1);
 res_sep1 = zeros(nG,MM,HH,K1);
 res_joint2 = zeros(nG,MM,HH,K2);
 res_sep2 = zeros(nG,MM,HH,K2);
-mdl = 'fscore';%fscore %Qlinks
+mdl = 'fronorm';%fscore
 mtrc = 'Mean';
 fmts = {'s:','x:','o:','*:','s-','x-','o-','*-'};
-%models = {'No hidden','PNN no-sim-P','PGL','PNN'};
 
 for m = 1:MM
     for hd = 1:HH
@@ -31,14 +30,10 @@ for m = 1:MM
 end
 
 if strcmp(mtrc,'Mean')
-    %res_err_sep1 = squeeze(mean(mean(res_sep1,4)));
     res_err_joint1 = squeeze(mean(mean(res_joint1,4)));
-    %res_err_sep2 = squeeze(mean(mean(res_sep2,4)));
     res_err_joint2 = squeeze(mean(mean(res_joint2,4)));
 elseif strcmp(mtrc,'Median')
-    %res_err_sep1 = squeeze(median(mean(res_sep1,4)));
     res_err_joint1 = squeeze(median(mean(res_joint1,4)));
-    %res_err_sep2 = squeeze(median(mean(res_sep2,4)));
     res_err_joint2 = squeeze(median(mean(res_joint2,4)));
 elseif strcmp(mtrc,'Recovery median')
     res_err_joint1 = squeeze(sum(median(res_joint1,4)==1)/nG);
@@ -48,37 +43,45 @@ elseif strcmp(mtrc,'Recovery mean')
     res_err_joint2 = squeeze(sum(mean(res_joint2,4)==1)/nG); 
 end
 
+% Plot properties
+mark_s = 8;
+line_w = 2;
+
+set(0,'defaultTextInterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex');
+set(groot, 'defaultLegendInterpreter','latex');
+
 %
 figure()
 MM = [1,3,4];
 for t = MM
-    plot(1:HH,res_err_joint1(t,:),fmts{t},'MarkerSize',12,'LineWidth',2)
+    plot(1:HH,res_err_joint1(t,:),fmts{t},'MarkerSize',mark_s,'LineWidth',line_w)
     hold on
     %lgnd{t} = ['K=3 ' models{t}];
 end
 
 for t = MM
-    plot(1:HH,res_err_joint2(t,:),fmts{t+4},'MarkerSize',12,'LineWidth',2)
+    plot(1:HH,res_err_joint2(t,:),fmts{t+4},'MarkerSize',mark_s,'LineWidth',line_w)
     hold on
     %lgnd{t+MM} = ['K=6 ' models{t}];
 end
-lgnd = {'K=3  No hidden','K=3  PGL','K=3 PNN','K=6  No hidden','K=6  PGL','K=6 PNN',};
-% for t = 1:MM
-%     plot(1:HH,res_err_sep(t,:),fmts{t+4},'MarkerSize',12,'LineWidth',2)
-%     hold on
-%     lgnd{t+MM} = ['Sep ' models{t}];
-% end
-legend(lgnd)
+lgnd = {'No hidden, K=3','PGL, K=3','PNN, K=3','No hidden, K=6','PGL, K=6','PNN, K=6',};
+
+legend(lgnd,'Location','southeast')
 if strcmp(mdl,'fronorm')
-    ylabel('Frobenius norm')
-    title([mtrc ' of the Frobenius norm'])
+    ylabel('Mean error')
+%     title([mtrc ' of the Frobenius norm'])
 else 
-    ylabel('Fscore')
-    title([mtrc ' of the Fscore'])
+    ylabel('Mean Fscore')
+    ylim([.5 1])
+    yticks(.5:.05:95)
+%     title([mtrc ' of the Fscore'])
     if strcmp(mtrc,'Recovery')
         ylabel('Fraction of recovered graphs')
         title(mtrc)
     end
 end
-xlabel('Number of hidden variables')
-
+xlabel('(a) Number of hidden variables')
+grid on;
+set(gca,'FontSize',14);
+set(gcf, 'PaperPositionMode', 'auto')

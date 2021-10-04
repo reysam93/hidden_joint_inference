@@ -27,7 +27,6 @@ regs.delta1  = 1e-3;    % Small number for reweighted
 
 % Load graphs and generate graph filters
 As = get_student_networks_graphs(graphs,N);
-% Try with whole graph also
 [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
 Ao = As(n_o,n_o,:);
 
@@ -71,7 +70,7 @@ parfor j=1:sig_trials
         
         % Separate inference
         for k=1:K
-            Ao_hat_s = estA_pgl_colsp_rw2(Co(:,:,k),N-O,regs,max_iters);
+            Ao_hat_s = estA_pgl_colsp_rw(Co(:,:,k),N-O,regs,max_iters);
             Aos_sep_t(:,:,k,i) = Ao_hat_s./max(max(Ao_hat_s));
         end
     end
@@ -118,10 +117,8 @@ semilogx(Ms,mean_errs(2,:),':x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_errs(3,:),':v','LineWidth',line_w,'MarkerSize',mark_s); hold off
 xlabel('(c) Number of samples')
 ylabel('Mean error')
-% legend(leg,'Location','northeast','NumColumns',2,'Color','none')
 legend(leg,'Location','northeast','NumColumns',2)
 grid on;
 ylim([0 1])
 set(gca,'FontSize',14);
 set(gcf, 'PaperPositionMode', 'auto')
-
