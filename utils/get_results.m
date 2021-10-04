@@ -5,11 +5,15 @@ function [err_joint,err_sep] = get_results(A,mdl)
     
     Ao = squeeze(A(1,:,:,:));
     Ao_hat = squeeze(A(2,:,:,:));
-    Ao_hat(Ao_hat <= 0.3) = 0;
-    Ao_hat(Ao_hat  > 0.3) = 1;
+
     Ao_hat_sep = squeeze(A(3,:,:,:));
-    Ao_hat_sep(Ao_hat_sep <= 0.3) = 0;
-    Ao_hat_sep(Ao_hat_sep  > 0.3) = 1;
+    
+    if strcmp(mdl,'fscore')
+        Ao_hat(Ao_hat <= 0.3) = 0;
+        Ao_hat(Ao_hat  > 0.3) = 1;
+        Ao_hat_sep(Ao_hat_sep <= 0.3) = 0;
+        Ao_hat_sep(Ao_hat_sep  > 0.3) = 1;
+    end
     
     Ao_hat = Ao_hat./max(max(Ao_hat));
     Ao_hat_sep = Ao_hat_sep./max(max(Ao_hat_sep));
