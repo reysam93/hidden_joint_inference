@@ -36,7 +36,7 @@ err_joint = zeros(nG,numel(Ks),numel(models),HH,Ks(end));
 err_sep = zeros(nG,numel(Ks),numel(models),HH,Ks(end));
 tic
 A_T = cell(nG,numel(Ks),numel(models),HH);
-parfor g = 1:nG
+for g = 1:nG
     disp(['Graph: ' num2str(g)])
     A = generate_connected_ER(N,p);
     A_org = A;
