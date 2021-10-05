@@ -4,15 +4,15 @@ addpath(genpath('utils'));
 addpath(genpath('opt'));
 
 close all
-Ks = [3,6];
+Ks = [3,6];%[3,6];   %--------------------
 N = 20;
-O = 15;
+O = 15;%15;        %-------------------
 HH = N-O;
 p = 0.2;
 pert_links = 3;
 L = 3;
-M = 1e3;
-sampled = false;
+M = 1e4;
+sampled = true;
 
 regs = struct();
 regs.lambda = 1;
@@ -25,8 +25,10 @@ prms.delta2 = 1e-3;
 prms.max_iters = 10;
 
 hid_nodes = 'min';
-nG = 64;
-models = {'baseline rw','PNN rw','grouplasso rw','lowrank rw'};
+nG = 64;             %-----------------
+%models = {'baseline','lowrank','lowrank rw','grouplasso','grouplasso rw'};
+models = {'No hidden rw','PNN rw','PGL rw'};
+%models = {'baseline rw'};
 
 % Create graphs
 As = zeros(N,N,Ks(end));
@@ -82,4 +84,4 @@ parfor g = 1:nG
 end
 toc
 %%
-plot_exp1
+plot_results
