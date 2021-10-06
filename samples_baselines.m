@@ -38,9 +38,9 @@ regs_lvgl_poly.beta = 5e-3;
 
 regs_poly = struct();
 regs_poly.alpha   = 1;       % Sparsity of S
-regs_poly.gamma   = 110;     % Group Lasso
-regs_poly.beta    = 10;      % Similarity of S
-regs_poly.eta     = 10;      % Similarity of P
+regs_poly.gamma   = 100;     % Group Lasso
+regs_poly.beta    = 5;      % Similarity of S
+regs_poly.eta     = 5;      % Similarity of P
 regs_poly.mu      = 1e3;     % Commutative penalty
 regs_poly.delta1  = 1e-3;    % Small number for reweighted
 
