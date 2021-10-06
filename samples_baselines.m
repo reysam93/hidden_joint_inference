@@ -17,8 +17,8 @@ hid_nodes = 'min';
 max_iters = 10;
 th = 0.3;
 
-leg = {'LVGL,C_{mrf}','GGL,C_{mrf}','FGL,C_{mrf}','PGL,C_{mrf}',...
-    'LVGL,C_{poly}','GGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}'};
+leg = {'LVGL,$C_{mrf}$','GGL,$C_{mrf}$','FGL,$C_{mrf}$','PGL,$C_{mrf}$',...
+    'LVGL,$C_{poly}$','GGL,$C_{poly}$','FGL,$C_{poly}$','PGL,$C_{poly}$'};
 
 regs_lvgl_mrf = struct();
 regs_lvgl_mrf.alpha = 1e-2;
@@ -38,9 +38,9 @@ regs_lvgl_poly.beta = 5e-3;
 
 regs_poly = struct();
 regs_poly.alpha   = 1;       % Sparsity of S
-regs_poly.gamma   = 110;      % Group Lasso
-regs_poly.beta    = 10;      % Similarity of S
-regs_poly.eta     = 10;      % Similarity of P
+regs_poly.gamma   = 100;      % Group Lasso
+regs_poly.beta    = 5;      % Similarity of S
+regs_poly.eta     = 5;      % Similarity of P
 regs_poly.mu      = 1e3;    % Commutative penalty
 regs_poly.delta1  = 1e-3;    % Small number for reweighted
 
