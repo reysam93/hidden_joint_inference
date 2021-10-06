@@ -24,7 +24,6 @@ As = get_student_networks_graphs(graphs,N);
 
 [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
 Ao = As(n_o,n_o,:);
-Aoh = As(n_o,n_h,:);
 
 err = zeros(length(mus),length(etas),length(betas),length(gammas),...
     length(deltas),signal_trials);
@@ -33,9 +32,6 @@ fsc = zeros(length(mus),length(etas),length(betas),length(gammas),...
 tic
 parfor g=1:signal_trials
     disp(['Trial: ' num2str(g)])
-    A = generate_connected_ER(N,p);
-    As = gen_similar_graphs(A,K,pert_links);
-    [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
     
     % Create covariances
     Cs = zeros(N,N,K);
@@ -68,7 +64,7 @@ parfor g=1:signal_trials
                     regs.eta = etas(f);
                     for m=1:length(mus)
                         regs.mu = mus(m);
-                        [Ao_hat,~] = estA_pgl_colsp_rw2(Co,N-O,regs,max_iters);
+                        [Ao_hat,~] = estA_pgl_colsp_rw(Co,N-O,regs,max_iters);
                         Ao_hat = Ao_hat./max(max(Ao_hat));
                         diff_Ao = Ao-Ao_hat;
                         for n=1:K

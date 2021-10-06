@@ -1,4 +1,4 @@
-load('results/data_exp1_v1.mat');
+load('data_exp1_tmp.mat');
 nG = size(A_T,1);
 nK = size(A_T,2);
 MM = size(A_T,3);
@@ -57,25 +57,24 @@ MM = [1,3,4];
 for t = MM
     plot(1:HH,res_err_joint1(t,:),fmts{t},'MarkerSize',mark_s,'LineWidth',line_w)
     hold on
-    %lgnd{t} = ['K=3 ' models{t}];
 end
 
 for t = MM
     plot(1:HH,res_err_joint2(t,:),fmts{t+4},'MarkerSize',mark_s,'LineWidth',line_w)
     hold on
-    %lgnd{t+MM} = ['K=6 ' models{t}];
 end
 lgnd = {'No hidden, K=3','PGL, K=3','PNN, K=3','No hidden, K=6','PGL, K=6','PNN, K=6',};
 
 legend(lgnd,'Location','southeast')
 if strcmp(mdl,'fronorm')
     ylabel('Mean error')
-%     title([mtrc ' of the Frobenius norm'])
+    ylabel('Mean error')
+    yticks(0:.1:.7)
+    ylim([0 .7])
 else 
     ylabel('Mean Fscore')
     ylim([.5 1])
     yticks(.5:.05:95)
-%     title([mtrc ' of the Fscore'])
     if strcmp(mtrc,'Recovery')
         ylabel('Fraction of recovered graphs')
         title(mtrc)
@@ -83,5 +82,5 @@ else
 end
 xlabel('(a) Number of hidden variables')
 grid on;
-set(gca,'FontSize',14);
+set(gca,'FontSize',16);
 set(gcf, 'PaperPositionMode', 'auto')

@@ -84,4 +84,5 @@ parfor g = 1:nG
 end
 toc
 %%
-plot_results
+save('data_exp1_tmp.mat');
+plot_exp1
