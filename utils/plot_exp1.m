@@ -1,4 +1,4 @@
-load('../results/data_exp1.mat');
+load('results/data_exp1_v1.mat');
 nG = size(A_T,1);
 nK = size(A_T,2);
 MM = size(A_T,3);
@@ -14,7 +14,7 @@ res_joint1 = zeros(nG,MM,HH,K1);
 res_sep1 = zeros(nG,MM,HH,K1);
 res_joint2 = zeros(nG,MM,HH,K2);
 res_sep2 = zeros(nG,MM,HH,K2);
-mdl = 'fscore';%fscore %Qlinks
+mdl = 'fronorm';%fscore %Qlinks
 mtrc = 'Mean';
 fmts = {'s:','x:','o:','*:','s-','x-','o-','*-'};
 %models = {'No hidden','PNN no-sim-P','PGL','PNN'};
@@ -48,37 +48,49 @@ elseif strcmp(mtrc,'Recovery mean')
     res_err_joint2 = squeeze(sum(mean(res_joint2,4)==1)/nG); 
 end
 
-%
+% Plot properties
+mark_s = 8;
+line_w = 2;
+
+% Mean error
+set(0,'defaultTextInterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex');
+set(groot, 'defaultLegendInterpreter','latex');
+
 figure()
 MM = [1,3,4];
 for t = MM
-    plot(1:HH,res_err_joint1(t,:),fmts{t},'MarkerSize',12,'LineWidth',2)
+    plot(1:HH,res_err_joint1(t,:),fmts{t},'MarkerSize',mark_s,'LineWidth',line_w)
     hold on
     %lgnd{t} = ['K=3 ' models{t}];
 end
 
 for t = MM
-    plot(1:HH,res_err_joint2(t,:),fmts{t+4},'MarkerSize',12,'LineWidth',2)
+    plot(1:HH,res_err_joint2(t,:),fmts{t+4},'MarkerSize',mark_s,'LineWidth',line_w)
     hold on
     %lgnd{t+MM} = ['K=6 ' models{t}];
 end
-lgnd = {'K=3  No hidden','K=3  PGL','K=3 PNN','K=6  No hidden','K=6  PGL','K=6 PNN',};
+lgnd = {'No hidden, K=3','PGL, K=3','PNN, K=3',...
+    'No hidden, K=6','PGL, K=6','PNN, K=6',};
 % for t = 1:MM
 %     plot(1:HH,res_err_sep(t,:),fmts{t+4},'MarkerSize',12,'LineWidth',2)
 %     hold on
 %     lgnd{t+MM} = ['Sep ' models{t}];
 % end
-legend(lgnd)
+legend(lgnd,'Location','southeast')
 if strcmp(mdl,'fronorm')
-    ylabel('Frobenius norm')
-    title([mtrc ' of the Frobenius norm'])
+    ylabel('Mean error')
+    yticks(0:.1:.7)
+    ylim([0 .7])
+%     title([mtrc ' of the Frobenius norm'])
 else 
-    ylabel('Fscore')
-    title([mtrc ' of the Fscore'])
+%     title([mtrc ' of the Fscore'])
     if strcmp(mtrc,'Recovery')
         ylabel('Fraction of recovered graphs')
         title(mtrc)
     end
 end
-xlabel('Number of hidden variables')
-
+xlabel('(a) Number of hidden variables')
+grid on;
+set(gca,'FontSize',16);
+set(gcf, 'PaperPositionMode', 'auto')

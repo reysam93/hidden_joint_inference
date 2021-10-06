@@ -119,9 +119,9 @@ semilogx(Ms,mean_errs(3,:),':v','LineWidth',line_w,'MarkerSize',mark_s); hold of
 xlabel('(c) Number of samples')
 ylabel('Mean error')
 % legend(leg,'Location','northeast','NumColumns',2,'Color','none')
-legend(leg,'Location','northeast','NumColumns',2)
 grid on;
 ylim([0 1])
-set(gca,'FontSize',14);
+set(gca,'FontSize',16);
+legend(leg,'Location','northeast','NumColumns',2,'FontSize',14);
 set(gcf, 'PaperPositionMode', 'auto')
 

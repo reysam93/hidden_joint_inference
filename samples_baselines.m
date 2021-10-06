@@ -217,19 +217,21 @@ mean_err = squeeze(mean(mean(mean(err,1),4),5));
 mark_s = 8;
 line_w = 2;
 
+leg(5) = [];
+
 figure();
 semilogx(Ms,mean_err(:,1),'--x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,2),'--v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,3),'--s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,4),'--o','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+% semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,6),'-v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,7),'-s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,8),'-o','LineWidth',line_w,'MarkerSize',mark_s); hold off
 xlabel('(b) Number of samples')
 ylabel('Mean error')
-legend(leg,'Location','northeast')
+legend(leg,'Location','east')
 grid on
 % ylim([0 1.5])
-set(gca,'FontSize',14);
+set(gca,'FontSize',16);
 set(gcf, 'PaperPositionMode', 'auto')
