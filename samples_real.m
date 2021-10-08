@@ -8,7 +8,7 @@ sig_trials = 100;
 K = length(graphs);
 N = 32;
 O = 31;
-F = 4;
+F = 3;
 Ms =  round(logspace(2,6,9));
 max_M = Ms(end);
 hid_nodes = 'min';
@@ -19,35 +19,32 @@ leg = {'G1 joint','G2 joint','G3 joint',...
 
 regs = struct();
 regs.alpha   = 1;       % Sparsity of S
-regs.gamma   = 100;      % Group Lasso
-regs.beta    = 50;      % Similarity of S
-regs.eta     = 25;      % Similarity of P
+regs.gamma   = 75;      % Group Lasso
+regs.beta    = 25;      % Similarity of S
+regs.eta     = 10;      % Similarity of P
 regs.mu      = 1000;    % Commutative penalty
 regs.delta1  = 1e-3;    % Small number for reweighted
 
 % Load graphs and generate graph filters
 As = get_student_networks_graphs(graphs,N);
-% Try with whole graph also
 [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
 Ao = As(n_o,n_o,:);
-
-H = zeros(N,N,K);
-for k=1:K
-    h = rand(F,1)*2-1;
-    for f=1:F
-        H(:,:,k) = H(:,:,k) + h(f)*As(:,:,k)^(f-1);
-    end
-end
 
 tic
 Aos_joint = zeros(O,O,K,length(Ms),sig_trials);
 Aos_sep = zeros(O,O,K,length(Ms),sig_trials);
 parfor j=1:sig_trials
     disp(['Trial: ' num2str(j)])
+
     % Generate signals X
     X = zeros(N,max_M,K);
     for k=1:K
-        X(:,:,k) = H(:,:,k)*randn(N,max_M);
+        H = zeros(N);
+        h = rand(F,1)*2-1;
+        for f=1:F
+            H = H + h(f)*As(:,:,k)^(f-1);
+        end
+        X(:,:,k) = H*randn(N,max_M);
     end
     
     Aos_joint_t = zeros(O,O,K,length(Ms));
