@@ -159,11 +159,11 @@ parfor g=1:n_graphs
 
             %%%% Estimates of Pgl %%%%
             % With mrf
-            Ao_hat = estA_pgl_colsp_rw(Co_mrf,N-O,regs_mrf,max_iters);
+            Ao_hat = estA_pgl_colsp_rw(Co_mrf,regs_mrf,max_iters);
             Aos_pgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
             
             % With C poly
-            [Ao_hat,~] = estA_pgl_colsp_rw(Co_poly,N-O,regs_poly,max_iters);
+            [Ao_hat,~] = estA_pgl_colsp_rw(Co_poly,regs_poly,max_iters);
             Aos_pgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
         end
     end

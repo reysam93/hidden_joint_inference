@@ -1,4 +1,4 @@
-function [Ao,P] = estA_pgl_colsp_rw(Co,H,regs,max_iters,verb)
+function [Ao,P] = estA_pgl_colsp_rw(Co,regs,max_iters,verb)
 if nargin < 4
     max_iters = 5;
 end
