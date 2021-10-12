@@ -160,11 +160,11 @@ parfor g=1:n_graphs
 
             %%%% Estimates of Pgl %%%%
             % With mrf
-            Ao_hat = estA_pgl_colsp_rw2(Co_mrf,N-O,regs_mrf,max_iters);
+            Ao_hat = estA_pgl_colsp_rw(Co_mrf,regs_mrf,max_iters);
             Aos_pgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
             
             % With C poly
-            [Ao_hat,~] = estA_pgl_colsp_rw2(Co_poly,N-O,regs_poly,max_iters);
+            [Ao_hat,~] = estA_pgl_colsp_rw(Co_poly,regs_poly,max_iters);
             Aos_pgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
         end
     end
@@ -220,10 +220,10 @@ line_w = 2;
 leg(5) = [];
 
 figure();
-semilogx(Ms,mean_err(:,1),'--x','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,2),'--v','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,3),'--s','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,4),'--o','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,1),':x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,2),':v','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,3),':s','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,4),':o','LineWidth',line_w,'MarkerSize',mark_s); hold on
 % semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,6),'-v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,7),'-s','LineWidth',line_w,'MarkerSize',mark_s); hold on

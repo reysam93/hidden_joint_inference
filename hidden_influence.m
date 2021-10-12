@@ -25,9 +25,9 @@ prms.delta2 = 1e-3;
 prms.max_iters = 10;
 
 hid_nodes = 'min';
-nG = 96;             %-----------------
+nG = 100;             %-----------------
 %models = {'baseline','lowrank','lowrank rw','grouplasso','grouplasso rw'};
-models = {'No hidden rw','PNN rw','PGN rw'};
+models = {'No hidden rw','PNN rw','PGL rw'};
 %models = {'baseline rw'};
 
 % Create graphs
@@ -84,4 +84,5 @@ for g = 1:nG
 end
 toc
 %%
-plot_results
+save('data_exp1_tmp.mat');
+plot_exp1

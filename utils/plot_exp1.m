@@ -1,4 +1,4 @@
-load('results/data_exp1_v1.mat');
+load('data_exp1_tmp.mat');
 nG = size(A_T,1);
 nK = size(A_T,2);
 MM = size(A_T,3);
@@ -16,7 +16,8 @@ res_joint2 = zeros(nG,MM,HH,K2);
 res_sep2 = zeros(nG,MM,HH,K2);
 mdl = 'fronorm';%fscore %Qlinks
 mtrc = 'Mean';
-fmts = {'s:','x:','o:','*:','s-','x-','o-','*-'};
+% fmts = {'s:','x:','o:','*:','s-','x-','o-','*-'};
+fmts = {'s:','o:','*:','s-','o-','*-'};
 %models = {'No hidden','PNN no-sim-P','PGL','PNN'};
 
 for m = 1:MM
@@ -58,33 +59,26 @@ set(groot, 'defaultAxesTickLabelInterpreter','latex');
 set(groot, 'defaultLegendInterpreter','latex');
 
 figure()
-MM = [1,3,4];
+% MM = [1,3,4]; % For old results
+MM = [1,2,3];
 for t = MM
     plot(1:HH,res_err_joint1(t,:),fmts{t},'MarkerSize',mark_s,'LineWidth',line_w)
     hold on
-    %lgnd{t} = ['K=3 ' models{t}];
 end
 
 for t = MM
-    plot(1:HH,res_err_joint2(t,:),fmts{t+4},'MarkerSize',mark_s,'LineWidth',line_w)
+    plot(1:HH,res_err_joint2(t,:),fmts{t+3},'MarkerSize',mark_s,'LineWidth',line_w)
     hold on
-    %lgnd{t+MM} = ['K=6 ' models{t}];
 end
 lgnd = {'No hidden, K=3','PGL, K=3','PNN, K=3',...
     'No hidden, K=6','PGL, K=6','PNN, K=6',};
-% for t = 1:MM
-%     plot(1:HH,res_err_sep(t,:),fmts{t+4},'MarkerSize',12,'LineWidth',2)
-%     hold on
-%     lgnd{t+MM} = ['Sep ' models{t}];
-% end
+
 legend(lgnd,'Location','southeast')
 if strcmp(mdl,'fronorm')
     ylabel('Mean error')
     yticks(0:.1:.7)
     ylim([0 .7])
-%     title([mtrc ' of the Frobenius norm'])
 else 
-%     title([mtrc ' of the Fscore'])
     if strcmp(mtrc,'Recovery')
         ylabel('Fraction of recovered graphs')
         title(mtrc)

@@ -63,12 +63,12 @@ parfor j=1:sig_trials
         Co = Cs(n_o,n_o,:);
         
         % Joint inference
-        Ao_hat_j = estA_pgl_colsp_rw2(Co,N-O,regs,max_iters);
+        Ao_hat_j = estA_pgl_colsp_rw(Co,regs,max_iters);
         Aos_joint_t(:,:,:,i) = Ao_hat_j./max(max(Ao_hat_j));
         
         % Separate inference
         for k=1:K
-            Ao_hat_s = estA_pgl_colsp_rw2(Co(:,:,k),N-O,regs,max_iters);
+            Ao_hat_s = estA_pgl_colsp_rw(Co(:,:,k),regs,max_iters);
             Aos_sep_t(:,:,k,i) = Ao_hat_s./max(max(Ao_hat_s));
         end
     end
@@ -119,6 +119,6 @@ ylabel('Mean error')
 grid on;
 ylim([0 1])
 set(gca,'FontSize',16);
-legend(leg,'Location','northeast','NumColumns',2,'FontSize',14);
+legend(leg,'Location','northeast','NumColumns',2);
 set(gcf, 'PaperPositionMode', 'auto')
 
