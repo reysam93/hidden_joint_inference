@@ -6,7 +6,7 @@ addpath(genpath('opt'));
 clear
 
 % Exp parameters
-nG = 10;     
+nG = 50;     
 Ks = 1:6;
 N = 20;
 O = 19;
@@ -52,8 +52,8 @@ regs_sep.eta     = 0;      % Similarity of P
 regs_sep.mu      = 1e3;    % Commutative penalty
 regs_sep.delta1  = 1e-3;   % Small number for reweighted
 
-% models = {'Sep, Hid', 'Sep, No Hid', 'Joint, No Hid','Joint, Hid'};
-models = {'Sep, Hid','Joint, Hid'};
+models = {'Sep, Hid','Joint, Hid','Sep, No Hid', 'Joint, No Hid'};
+% models = {'Sep, Hid','Joint, Hid'};
 
 
 %%
@@ -101,6 +101,14 @@ parfor g = 1:nG
         [Ao_pgl,~] = estA_pgl_colsp_rw(Co,regs_joint,max_iters);
         Ao_pgl_max1 = Ao_pgl./max(max(Ao_pgl));
 
+        % Sep-No hidden
+        Ao_sep_n = estA_stat_nohid(Co,regs_sep,max_iters);
+        Ao_sep_n_max1 = Ao_sep_n./max(max(Ao_sep_n));
+
+        % Joint No-Hidden
+        Ao_pgl_n = estA_stat_nohid(Co,regs_joint,max_iters);
+        Ao_pgl_n_max1 = Ao_pgl_n./max(max(Ao_pgl_n));
+
         % Compute error
         for k = 1:K
             Aok = Ao(:,:,k);
@@ -109,14 +117,22 @@ parfor g = 1:nG
 
             err_g(1,i) = err_g(1,i) + (norm(Aok-Ao_sep(:,:,k),'fro')/norm_Aok)^2/K;
             err_g(2,i) = err_g(2,i) + (norm(Aok-Ao_pgl(:,:,k),'fro')/norm_Aok)^2/K;
+            err_g(3,i) = err_g(3,i) + (norm(Aok-Ao_sep_n(:,:,k),'fro')/norm_Aok)^2/K;
+            err_g(4,i) = err_g(4,i) + (norm(Aok-Ao_pgl_n(:,:,k),'fro')/norm_Aok)^2/K;
 
             err2_g(1,i) = err2_g(1,i) + (norm(Aok-Ao_sep_max1(:,:,k),'fro')/norm_Aok)^2/K;
             err2_g(2,i) = err2_g(2,i) + (norm(Aok-Ao_pgl_max1(:,:,k),'fro')/norm_Aok)^2/K;
+            err2_g(3,i) = err2_g(3,i) + (norm(Aok-Ao_sep_n_max1(:,:,k),'fro')/norm_Aok)^2/K;
+            err2_g(4,i) = err2_g(4,i) + (norm(Aok-Ao_pgl_n_max1(:,:,k),'fro')/norm_Aok)^2/K;
 
             Ao_sep_norm = Ao_sep(:,:,k)/norm(Ao_sep(:,:,k),'fro');
             Ao_pgl_norm = Ao_pgl(:,:,k)/norm(Ao_pgl(:,:,k),'fro');
+            Ao_sep_n_norm = Ao_sep_n(:,:,k)/norm(Ao_sep_n(:,:,k),'fro');
+            Ao_pgl_n_norm = Ao_pgl_n(:,:,k)/norm(Ao_pgl_n(:,:,k),'fro');
             err_no_sa_g(1,i) = err_no_sa_g(1,i) + norm(Aok_norm-Ao_sep_norm,'fro')^2/K;
             err_no_sa_g(2,i) = err_no_sa_g(2,i) + norm(Aok_norm-Ao_pgl_norm,'fro')^2/K;
+            err_no_sa_g(3,i) = err_no_sa_g(3,i) + norm(Aok_norm-Ao_sep_n_norm,'fro')^2/K;
+            err_no_sa_g(4,i) = err_no_sa_g(4,i) + norm(Aok_norm-Ao_pgl_n_norm,'fro')^2/K;
         end
     end
     err(:,:,g) = err_g;
