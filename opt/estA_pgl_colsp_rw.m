@@ -37,7 +37,6 @@ for i=1:max_iters
             for j=1:(k-1)
                f0 = f0 + beta*norm(vec(Ao(:,:,k)-Ao(:,:,j)),1) +...
                    eta*sum(norms([P(:,:,k); P(:,:,j)],2));
-               
             end
         end
 
@@ -54,11 +53,12 @@ for i=1:max_iters
     f0_diff = abs(f0 - f0_prev);
     Ao_prev = Ao;
     
-    comm = norm(Co(:,:,k)*Ao(:,:,k)+P(:,:,k)...
-                -Ao(:,:,k)*Co(:,:,k)-P(:,:,k)','fro');
+%     comm = norm(Co(:,:,k)*Ao(:,:,k)+P(:,:,k)...
+%                 -Ao(:,:,k)*Co(:,:,k)-P(:,:,k)','fro');
+    comm = 0;
     
     if verb
-        disp(['Iter: ' num2str(i) '   f0-f0_prev: ' num2str(f0_diff)...
+        disp(['Iter: ' num2str(i) ' status: ' cvx_status  '   f0-f0_prev: ' num2str(f0_diff)...
             '   Ao-Ao_prev: ' num2str(diff_Ao)...
             '   Comm: ' num2str(comm)])
     end

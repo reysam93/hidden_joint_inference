@@ -15,7 +15,7 @@ function [As] =  gen_similar_graphs(A,K,pert_links)
 
             % create link
             [nonlink_nodes,~] = find(As(:,node_id,1)==0);
-            nonlink_nodes(nonlink_nodes==node_id) = [];
+            nonlink_nodes(nonlink_nodes==node_id) = [];  % avoid self loops
             add_node = nonlink_nodes(randperm(length(nonlink_nodes),1));
             As(node_id,add_node,k) = 1;
             As(add_node,node_id,k) = 1;

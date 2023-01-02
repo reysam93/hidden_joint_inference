@@ -17,7 +17,7 @@ res_sep2 = zeros(nG,MM,HH,K2);
 mdl = 'fronorm';%fscore %Qlinks
 mtrc = 'Mean';
 % fmts = {'s:','x:','o:','*:','s-','x-','o-','*-'};
-fmts = {'s:','o:','*:','s-','o-','*-'};
+fmts = {'s:','o:','^:','s-','o-','^-'};
 %models = {'No hidden','PNN no-sim-P','PGL','PNN'};
 
 for m = 1:MM
