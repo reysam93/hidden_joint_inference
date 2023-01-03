@@ -3,7 +3,7 @@ rng(10)
 addpath(genpath('utils'));
 addpath(genpath('opt'));
 
-n_graphs = 30;
+n_graphs = 25;
 K = 3;
 N = 20;
 O = 19;
@@ -15,7 +15,8 @@ sampled = true;
 hid_nodes = 'min';
 max_iters = 10;
 th = 0.3;
-Cmrf = true;
+Cmrf = false;
+
 
 deltas = [1e-2 1e-3 1e-4];
 gammas = [10 25 50 75 100];
@@ -35,28 +36,29 @@ parfor g=1:n_graphs
     [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
     
     % Create covariances
-    Cs = zeros(N,N,K);
-    for k=1:K
-        if Cmrf
-            eigvals = eig(As(:,:,k));
-            C_inv = (0.01-min(eigvals))*eye(N,N) + (0.9+0.1*rand(1,1))*As(:,:,k);
-            C_true = inv(C_inv);
-        else
-            h = rand(F,1)*2-1;
-            H = zeros(N);
-            for f=1:F
-                H = H + h(f)*As(:,:,k)^(f-1);
-            end
-            C_true = H^2;
-        end
-        
-        if sampled
-            X = sqrtm(C_true)*randn(N,M);
-            Cs(:,:,k) = X*X'/M;
-        else
-            Cs(:,:,k) = C_true;
-        end
-    end
+    Cs = create_cov(As,F,M,sampled); 
+%     Cs = zeros(N,N,K);
+%     for k=1:K
+%         if Cmrf
+%             eigvals = eig(As(:,:,k));
+%             C_inv = (0.01-min(eigvals))*eye(N,N) + (0.9+0.1*rand(1,1))*As(:,:,k);
+%             C_true = inv(C_inv);
+%         else
+%             h = rand(F,1)*2-1;
+%             H = zeros(N);
+%             for f=1:F
+%                 H = H + h(f)*As(:,:,k)^(f-1);
+%             end
+%             C_true = H^2;
+%         end
+%         
+%         if sampled
+%             X = sqrtm(C_true)*randn(N,M);
+%             Cs(:,:,k) = X*X'/M;
+%         else
+%             Cs(:,:,k) = C_true;
+%         end
+%     end
     
     Ao = As(n_o,n_o,:);
     Aoh = As(n_o,n_h,:);
@@ -83,8 +85,8 @@ parfor g=1:n_graphs
                         Ao_hat = Ao_hat./max(max(Ao_hat));
                         diff_Ao = Ao-Ao_hat;
                         for n=1:K
-                            norm_Ao = norm(Ao(:,:,n),'fro')^2;
-                            err_g(n,m,f,k,j,o) = norm(diff_Ao(:,:,n),'fro')^2/norm_Ao;
+                            norm_Ao = norm(Ao(:,:,n),'fro');
+                            err_g(n,m,f,k,j,o) = (norm(diff_Ao(:,:,n),'fro')/norm_Ao)^2;
                             
                             Ao_th = Ao(:,:,n);
                             Ao_th(Ao_th >= th) = 1;
