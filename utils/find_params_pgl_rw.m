@@ -16,6 +16,7 @@ hid_nodes = 'min';
 max_iters = 10;
 th = 0.3;
 Cmrf = false;
+verb_freq = 10;
 
 
 deltas = [1e-2 1e-3 1e-4];
@@ -30,7 +31,6 @@ fsc = zeros(length(mus),length(etas),length(betas),length(gammas),...
     length(deltas),n_graphs);
 tic
 parfor g=1:n_graphs
-    disp(['Graph: ' num2str(g)])
     A = generate_connected_ER(N,p);
     As = gen_similar_graphs(A,K,pert_links);
     [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
@@ -81,6 +81,7 @@ parfor g=1:n_graphs
                     regs.eta = etas(f);
                     for m=1:length(mus)
                         regs.mu = mus(m);
+
                         [Ao_hat,~] = estA_pgl_colsp_rw(Co,regs,max_iters);
                         Ao_hat = Ao_hat./max(max(Ao_hat));
                         diff_Ao = Ao-Ao_hat;
@@ -98,6 +99,14 @@ parfor g=1:n_graphs
                             [~,~,fsc_g(n,m,f,k,j,o),~,~] = ...
                                 graph_learning_perf_eval(Ao_th,Ao_hat_th);
                         end
+
+                        if mod(n_graphs,verb_freq) == 1
+                            disp(['Graph: ' num2str(g) ' delta: ' num2str(regs.delta1) ...
+                                ' gamma: ' num2str(regs.gamma) ' beta: ' ...
+                                num2str(regs.beta) ' eta: ' num2str(regs.eta) ...
+                                ' mu: ' num2str(regs.mu) ' err: ' num2str(err_g(n,m,f,k,j,o))])
+                        end
+
                     end
                 end
             end
