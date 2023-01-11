@@ -6,7 +6,7 @@ clear
 
 % Exp parameters
 nG = 50;
-Prop_pert_links = [0, .1, .2, .3, .4];
+Prop_pert_links = [0, .05, .1, .15, .2, .25, .3];
 K = 3;
 N = 20;
 O = 19;
@@ -22,18 +22,18 @@ verb_freq = 10;
 % REGS
 regs_joint = struct();
 regs_joint.alpha   = 1;      % Sparsity of S
-regs_joint.gamma   = 100;    % Group Lasso (each P)
-regs_joint.beta    = 5;      % Similarity of Ss
-regs_joint.eta     = 5;      % Similarity of Ps
-regs_joint.mu      = 1e3;    % Commutative penalty
+regs_joint.gamma   = 75;    % Group Lasso (each P)
+regs_joint.beta    = 10;      % Similarity of Ss
+regs_joint.eta     = 50;      % Similarity of Ps
+regs_joint.mu      = 1e4;    % Commutative penalty
 regs_joint.delta1  = 1e-3;   % Small number for reweighted
 
 regs_sep= struct();
 regs_sep.alpha   = 1;      % Sparsity of S
-regs_sep.gamma   = 100;    % Group Lasso
+regs_sep.gamma   = 75;    % Group Lasso
 regs_sep.beta    = 0;      % Similarity of S
 regs_sep.eta     = 0;      % Similarity of P
-regs_sep.mu      = 1e3;    % Commutative penalty
+regs_sep.mu      = 1e4;    % Commutative penalty
 regs_sep.delta1  = 1e-3;   % Small number for reweighted
 
 models = {'Sep','Joint'};
@@ -52,7 +52,7 @@ parfor g = 1:nG
         pert_links = round(sum(sum(A))/2*Prop_pert_links(i));
 
         if mod(g,verb_freq) == 1
-            disp(['Graph: ' num2str(g) ' Pert links: ' num2str(pert_links)])
+            disp(['Graph: ' num2str(g) ' Rew links: ' num2str(pert_links)])
         end
 
         As = gen_similar_graphs(A,K,pert_links);
@@ -82,6 +82,11 @@ parfor g = 1:nG
             err_no_sa_g(1,i) = err_no_sa_g(1,i) + norm(Aok_norm-Ao_sep_norm,'fro')^2/K;
             err_no_sa_g(2,i) = err_no_sa_g(2,i) + norm(Aok_norm-Ao_pgl_norm,'fro')^2/K;
         end
+
+        if mod(g,verb_freq) == 1
+            disp(['Graph: ' num2str(g) ' Rew links: ' num2str(pert_links) ' Err: ' num2str(err_g(2,i))])
+        end
+
     end
     err(:,:,g) = err_g;
     err_no_sa(:,:,g) = err_no_sa_g;

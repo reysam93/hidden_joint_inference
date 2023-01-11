@@ -6,7 +6,7 @@ addpath(genpath('opt'));
 clear
 
 % Exp parameters
-nG = 50;     
+nG = 10;     
 Ks = 1:6;
 N = 20;
 O = 19;
@@ -29,11 +29,20 @@ max_iters = 10;
 % prms.delta2 = 1e-3;
 
 % MINE
-regs_joint = struct();
+% regs_joint = struct();
+% regs_joint.alpha   = 1;      % Sparsity of S
+% regs_joint.gamma   = 100;    % Group Lasso (each P)
+% regs_joint.beta    = 5;      % Similarity of Ss
+% regs_joint.eta     = 5;      % Similarity of Ps
+% regs_joint.mu      = 1e3;    % Commutative penalty
+% regs_joint.delta1  = 1e-3;   % Small number for reweighted
+
+% CURRENT BEST
+regs_joint = struct(); 
 regs_joint.alpha   = 1;      % Sparsity of S
-regs_joint.gamma   = 100;    % Group Lasso (each P)
-regs_joint.beta    = 5;      % Similarity of Ss
-regs_joint.eta     = 5;      % Similarity of Ps
+regs_joint.gamma   = 50;    % Group Lasso (each P)
+regs_joint.beta    = 10;      % Similarity of Ss
+regs_joint.eta     = 50;      % Similarity of Ps
 regs_joint.mu      = 1e3;    % Commutative penalty
 regs_joint.delta1  = 1e-3;   % Small number for reweighted
 
@@ -134,6 +143,11 @@ parfor g = 1:nG
             err_no_sa_g(3,i) = err_no_sa_g(3,i) + norm(Aok_norm-Ao_sep_n_norm,'fro')^2/K;
             err_no_sa_g(4,i) = err_no_sa_g(4,i) + norm(Aok_norm-Ao_pgl_n_norm,'fro')^2/K;
         end
+
+        if mod(g,verb_freq) == 1
+            disp(['Graph: ' num2str(g) ' K: ' num2str(K) ' Err: ' num2str(err2_g(2,i))])
+        end
+
     end
     err(:,:,g) = err_g;
     err2(:,:,g) = err2_g;
