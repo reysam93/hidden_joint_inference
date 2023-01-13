@@ -18,7 +18,7 @@ M = 1e4;
 sampled = true;
 hid_nodes = 'min';
 max_iters = 10;
-
+verb_freq = 20;
 
 % Weight for regularization
 regs_joint = struct(); 
@@ -48,8 +48,6 @@ err = zeros(length(models),length(Ks),nG);
 err2 = zeros(length(models),length(Ks),nG);
 tic
 parfor g = 1:nG
-    disp(['Graph: ' num2str(g)])
-
     % Create graphs
     A = generate_connected_ER(N,p);
     As = gen_similar_graphs(A,Ks(end),pert_links);
