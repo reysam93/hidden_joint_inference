@@ -21,7 +21,7 @@ for i=1:max_iters
 
     % Step 1: infer Ao and Aoh
     cvx_begin quiet
-        variable Ao(O,O,K) symmetric nonnegative
+        variable A(N,N,K) symmetric nonnegative
         % Sparsity of Ao
         f0 = vec(W_Ao)'*vec(A);
         for k=1:K

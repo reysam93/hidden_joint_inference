@@ -1,5 +1,5 @@
-function [Cs] = create_cov(As,L,M,sampled,type)
-    if nargin < 4
+function [Cs] = create_cov(As,L,M,sampled,type,weights)
+    if nargin < 5
         type = 'st';
     end
 
@@ -9,8 +9,8 @@ function [Cs] = create_cov(As,L,M,sampled,type)
     Cs = zeros(size(As));
     for k=1:K
         if strcmp(type,'st')
-            %h = rand(L,1)*2-1;
-            h = randn(L,1);
+            h = rand(L,1)*2;
+            %h = randn(L,1);
             h = h/norm(h,1);
             H = zeros(N);
             for l=1:L
