@@ -1,6 +1,11 @@
-function [Cs] = create_cov(As,L,M,sampled,type,weights)
+function [Cs] = create_cov(As,L,M,sampled,type,h)
     if nargin < 5
-        type = 'st';
+        type = 'poly';
+    end
+    if nargin < 6
+        h = rand(L,1)*2;
+        % h = randn(L,1);
+        h = h/norm(h,1);
     end
 
     % Create covariances
@@ -8,10 +13,7 @@ function [Cs] = create_cov(As,L,M,sampled,type,weights)
     K = size(As,3);
     Cs = zeros(size(As));
     for k=1:K
-        if strcmp(type,'st')
-            h = rand(L,1)*2;
-            %h = randn(L,1);
-            h = h/norm(h,1);
+        if strcmp(type,'poly')
             H = zeros(N);
             for l=1:L
                 H = H + h(l)*As(:,:,k)^(l-1);
