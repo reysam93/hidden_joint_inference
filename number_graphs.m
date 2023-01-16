@@ -133,7 +133,6 @@ ylabel('Mean err2')
 %%
 mean_err = median(err,3);
 mean_err2 = median(err2,3);
-mean_err_no_sa = median(err_no_sa,3);
 
 figure()
 plot(Ks,mean_err)
