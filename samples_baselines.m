@@ -4,7 +4,7 @@ addpath(genpath('utils'));
 addpath(genpath('opt'));
 
 n_graphs = 30;
-sig_trials = 10;
+sig_trials = 5; %10;
 
 K = 3;
 N = 20;
@@ -12,10 +12,11 @@ O = 19;
 p = 0.2;
 F = 3;
 pert_links = 3;
-Ms = round(logspace(2,6,9));
+Ms = [1e2, 1e3, 1e4, 1e5]; %round(logspace(2,6,9));
 hid_nodes = 'min';
 max_iters = 10;
-th = 0.3;
+verb_freq = 20;
+%th = 0.3;
 
 leg = {'LVGL,$C_{mrf}$','GGL,$C_{mrf}$','FGL,$C_{mrf}$','PGL,$C_{mrf}$',...
     'LVGL,$C_{poly}$','GGL,$C_{poly}$','FGL,$C_{poly}$','PGL,$C_{poly}$'};
@@ -36,6 +37,7 @@ regs_lvgl_poly = struct();
 regs_lvgl_poly.alpha = 5e-3;
 regs_lvgl_poly.beta = 5e-3;
 
+% OLD REGS
 regs_poly = struct();
 regs_poly.alpha   = 1;       % Sparsity of S
 regs_poly.gamma   = 100;      % Group Lasso
@@ -87,6 +89,7 @@ parfor g=1:n_graphs
     H = zeros(N,N,K);
     for k=1:K
         h = rand(F,1)*2-1;
+        %h = h/norm(h,1);
         for f=1:F
             H(:,:,k) = H(:,:,k) + h(f)*As(:,:,k)^(f-1);
         end
