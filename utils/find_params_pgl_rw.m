@@ -3,19 +3,23 @@ rng(10)
 addpath(genpath('utils'));
 addpath(genpath('opt'));
 
+
+%%%% SETTING %%%%%
+REW_ONLY_OBS = true;
+C_TYPE = 'poly';  % or mrf
+
 n_graphs = 25;
 K = 3;
 N = 20;
 O = 19;
 p = 0.2;
-pert_links = 3;
+rew_links = 3;
 F = 3;
 M = 1e4;
 sampled = true;
 hid_nodes = 'min';
 max_iters = 10;
 th = 0.3;
-C_type = 'st';
 verb_freq = 10;
 
 deltas = [1e-2 1e-3 1e-4];
@@ -30,9 +34,14 @@ tic
 parfor g=1:n_graphs
     % Generate data
     A = generate_connected_ER(N,p);
-    As = gen_similar_graphs(A,K,pert_links);
-    [n_o, n_h] = select_hidden_nodes(hid_nodes, O, As(:,:,1));
-    Cs = create_cov(As,F,M,sampled, C_type); 
+    [n_o, n_h] = select_hidden_nodes(hid_nodes,O,A);
+    if REW_ONLY_OBS
+        As = gen_similar_graphs_hid(A,Ks(end),pert_links,n_o,n_h);
+    else
+        As = gen_similar_graphs(A,K,rew_links);
+    end
+
+    Cs = create_cov(As,F,M,sampled, C_TYPE);
     Ao = As(n_o,n_o,:);
     Co = Cs(n_o,n_o,:);
     
@@ -54,20 +63,22 @@ parfor g=1:n_graphs
                     for m=1:length(mus)
                         regs.mu = mus(m);
 
+
+                        
                         [Ao_hat,~] = estA_pgl_colsp_rw(Co,regs,max_iters);
                         Ao_hat = Ao_hat./max(max(Ao_hat));
                         diff_Ao = Ao-Ao_hat;
                         for n=1:K
                             norm_Ao = norm(Ao(:,:,n),'fro');
-                            err_g(n,m,f,k,j,o) = err_g(n,m,f,k,j,o) + ...
+                            err_g(m,f,k,j,o) = err_g(m,f,k,j,o) + ...
                                 (norm(diff_Ao(:,:,n),'fro')/norm_Ao)^2/K;
                         end
 
-                        if mod(G ,verb_freq) == 1
+                        if mod(g,verb_freq) == 1
                             disp(['Graph: ' num2str(g) ' delta: ' num2str(regs.delta1) ...
                                 ' gamma: ' num2str(regs.gamma) ' beta: ' ...
                                 num2str(regs.beta) ' eta: ' num2str(regs.eta) ...
-                                ' mu: ' num2str(regs.mu) ' err: ' num2str(err_g(n,m,f,k,j,o))])
+                                ' mu: ' num2str(regs.mu) ' err: ' num2str(err_g(m,f,k,j,o))])
                         end
 
                     end
