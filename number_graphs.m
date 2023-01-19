@@ -29,6 +29,17 @@ regs_joint.eta     = 10;      % Similarity of Ps
 regs_joint.mu      = 1e4;    % Commutative penalty
 regs_joint.delta1  = 1e-3;   % Small number for reweighted
 
+
+% Weight from Andrei
+% regs_joint = struct(); 
+% regs_joint.alpha   = 1e-2;      % Sparsity of S
+% regs_joint.gamma   = 5;    % Group Lasso (each P)
+% regs_joint.beta    = 1e-1;      % Similarity of Ss
+% regs_joint.eta     = 1e-3;      % Similarity of Ps
+% regs_joint.mu      = 1e2;    % Commutative penalty
+% regs_joint.delta1  = 1e-3;   % Small number for reweighted
+
+
 regs_sep= struct();
 regs_sep.alpha   = 1;      % Sparsity of S
 regs_sep.gamma   = 100;    % Group Lasso
@@ -48,15 +59,13 @@ err = zeros(length(models),length(Ks),nG);
 err2 = zeros(length(models),length(Ks),nG);
 tic
 parfor g = 1:nG
-    % Create graphs
-    A = generate_connected_ER(N,p);
-    As = gen_similar_graphs(A,Ks(end),pert_links);
     
-    % Create covariance
-    Cs = create_cov(As,L,M,sampled);
+    A = generate_connected_ER(N,p);
+    [n_o, n_h] = select_hidden_nodes(hid_nodes,O,A);
 
-    % Select hidden
-    [n_o, n_h] = select_hidden_nodes(hid_nodes,O,As(:,:,1));
+    As = gen_similar_graphs_hid(A,Ks(end),pert_links,n_o,n_h);
+%     As = gen_similar_graphs(A,Ks(end),pert_links);
+    Cs = create_cov(As,L,M,sampled);
 
     err_g = zeros(length(models),length(Ks));
     err2_g = zeros(length(models),length(Ks));
