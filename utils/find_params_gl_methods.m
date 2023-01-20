@@ -22,8 +22,8 @@ verb_freq = 10;
 th = 0.3;
 Cmrf = true;
 
-alphas = logspace(-4,2,13);
-betas =  logspace(-4,2,13);
+alphas = logspace(-5,-2,5);
+betas =  logspace(-5,-1,9);
 
 err_lvgl = zeros(length(alphas),length(betas),n_graphs);
 err_ggl = zeros(length(alphas),length(betas),n_graphs);
@@ -90,11 +90,20 @@ t = toc;
 disp(['--- ' num2str(t/3600) ' hours'])
 %% Display results
 mean_err_lvgl = mean(err_lvgl,3);
-mean_err_ggl = mean(err_ggl,3);
 mean_err_fgl = mean(err_fgl,3);
 
+[~, lin_idx] = min(mean_err_lvgl(:));
+[j,i] = ind2sub(size(mean_err_lvgl),lin_idx);
+disp(['Min err  LV-GL: Alpha: ' num2str(alphas(j)) ' Beta: ' num2str(betas(i))...
+      ' Err: ' num2str(mean_err_lvgl(j,i))])
+  
+[~, lin_idx] = min(mean_err_fgl(:));
+[j,i] = ind2sub(size(mean_err_fgl),lin_idx);
+disp(['Min err  FGL: Lambda1: ' num2str(alphas(j)) ' Lambda2: ' num2str(betas(i))...
+      ' Err: ' num2str(mean_err_fgl(j,i))])
+  
+  
 disp(['Min mean err LV-GL: ' num2str(min(mean_err_lvgl(:)))])
-% disp(['Min mean err GGL: ' num2str(min(mean_err_ggl(:)))])
 disp(['Min mean err FGL: ' num2str(min(mean_err_fgl(:)))])
 
 figure()
@@ -108,16 +117,6 @@ set(gca,'YTick',1:length(betas))
 set(gca,'YTickLabel',betas)
 title('LV-GL')
 
-% figure()
-% imagesc(mean_err_ggl)
-% colorbar()
-% xlabel('Lambda1')
-% set(gca,'XTick',1:length(alphas))
-% set(gca,'XTickLabel',alphas)
-% ylabel('Lambda2')
-% set(gca,'YTick',1:length(betas))
-% set(gca,'YTickLabel',betas)
-% title('GGL')
 
 figure()
 imagesc(mean_err_fgl)
