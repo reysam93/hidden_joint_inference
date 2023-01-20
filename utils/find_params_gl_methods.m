@@ -7,36 +7,36 @@ addpath(genpath('opt'));
 REW_ONLY_OBS = false;
 C_TYPE = 'poly';  % or mrf
 
-n_graphs = 30;
+n_graphs = 15;
 K = 3;
 N = 20;
 O = 19;
 p = 0.2;
-pert_links = 3;
+rew_links = 3;
 F = 3;
 M = 1e4;
 sampled = true;
 hid_nodes = 'min';
 max_iters = 10;
+verb_freq = 10;
 th = 0.3;
 Cmrf = true;
 
-alphas = logspace(-4,3,25);
-betas =  logspace(-4,3,25);
+alphas = logspace(-4,2,13);
+betas =  logspace(-4,2,13);
 
 err_lvgl = zeros(length(alphas),length(betas),n_graphs);
 err_ggl = zeros(length(alphas),length(betas),n_graphs);
 err_fgl = zeros(length(alphas),length(betas),n_graphs);
 tic
 parfor g=1:n_graphs
-    disp(['Graph: ' num2str(g)])
     A = generate_connected_ER(N,p);
     [n_o, n_h] = select_hidden_nodes(hid_nodes, O, A);
-    if REW_ONLY_OBS
-        As = gen_similar_graphs_hid(A,Ks(end),pert_links,n_o,n_h);
-    else
+    %if REW_ONLY_OBS
+    %    As = gen_similar_graphs_hid(A,Ks(end),rew_links,n_o,n_h);
+    %else
         As = gen_similar_graphs(A,K,rew_links);
-    end
+    %end
     Cs = create_cov(As,F,M,sampled, C_TYPE);
     
     Ao = As(n_o,n_o,:);
@@ -54,8 +54,8 @@ parfor g=1:n_graphs
             regs.lambda1 = alphas(j);
 
             % Group Graphical Lasso
-%             Ao_ggl = gglasso(Co,regs);
-%             Ao_ggl = Ao_ggl./max(max(Ao_ggl));
+            Ao_ggl = gglasso(Co,regs);
+            Ao_ggl = Ao_ggl./max(max(Ao_ggl));
 
             % Fused Graphical Lasso
             Ao_fgl = fglasso(Co,regs);
@@ -71,6 +71,14 @@ parfor g=1:n_graphs
                 err_ggl_g(k,j,i) = norm(Ao(:,:,k)-Ao_ggl(:,:,k),'fro')^2/norm_Ao;
                 err_fgl_g(k,j,i) = norm(Ao(:,:,k)-Ao_fgl(:,:,k),'fro')^2/norm_Ao;
             end
+            
+            if mod(g,verb_freq) == 1
+                disp(['Graph: ' num2str(g) ' beta: ' num2str(regs.beta)...
+                    ' alphas: ' num2str(regs.alpha) ' err (LVGL): '...
+                    num2str(err_lvgl_g(k,j,i)) ' err (FGL): ' ...
+                    num2str(err_fgl_g(k,j,i))])
+            end
+
 
         end
     end
