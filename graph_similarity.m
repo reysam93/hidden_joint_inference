@@ -57,7 +57,7 @@ regs_poly.mu      = 1e4;    % Commutative penalty
 regs_poly.delta1  = 1e-3;   % Small number for reweighted
 
 % LVGL, FGL, Our, Ours GMRF
-models = {'LVGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}',
+models = {'LVGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}',...
     'LVGL,C_{MRF}','FGL,C_{MRF}','PGL,C_{MRF}'};
 
 %%
@@ -82,7 +82,7 @@ for g = 1:nG
 
         % Create covariances
         Cs_mrf = create_cov(As,L,M,sampled,'mrf');
-        Cs_poly = create_cov(As,L,M,sampled,'poly', h);
+        Cs_poly = create_cov(As,L,M,sampled,'poly');
         Co_mrf = Cs_mrf(n_o,n_o,:);
         Co_poly = Cs_poly (n_o,n_o,:);
 
