@@ -17,21 +17,21 @@ M = 1e4;
 sampled = true;
 hid_nodes = 'min';
 max_iters = 10;
-verb_freq = 10;
+verb_freq = 20;
 
-% REGS LVGL
-% regs_lvgl_mrf = struct();
-% regs_lvgl_mrf.alpha = 1e-2;
-% regs_lvgl_mrf.beta = 1e-3;
+% REGS LVG
+regs_lvgl_mrf = struct();
+regs_lvgl_mrf.alpha = 1e-2;
+regs_lvgl_mrf.beta = 1e-3;
 
 regs_lvgl_poly = struct();
 regs_lvgl_poly.alpha = 5e-3;
 regs_lvgl_poly.beta = 5e-3;
 
 % REGS FGL
-% regs_ggl_mrf = struct();
-% regs_ggl_mrf.lambda1 = 1e-3;
-% regs_ggl_mrf.lambda2 = 1e-3;
+regs_ggl_mrf = struct();
+regs_ggl_mrf.lambda1 = 1e-3;
+regs_ggl_mrf.lambda2 = 1e-3;
 
 regs_ggl_poly = struct();
 regs_ggl_poly.lambda1 = 1e-1;
@@ -39,14 +39,14 @@ regs_ggl_poly.lambda2 = 1e-1;
 
 
 % REGS PGL
-% % NEED ADJUSTING
-% regs_mrf = struct();
-% regs_mrf.alpha   = 1;       % Sparsity of S
-% regs_mrf.gamma   = 1e4;      % Group Lasso
-% regs_mrf.beta    = 5;      % Similarity of S
-% regs_mrf.eta     = 10;      % Similarity of P
-% regs_mrf.mu      = 1e6;    % Commutative penalty
-% regs_mrf.delta1  = 1e-3;    % Small number for reweighted
+% NEED ADJUSTING
+regs_mrf = struct();
+regs_mrf.alpha   = 1;       % Sparsity of S
+regs_mrf.gamma   = 1e4;      % Group Lasso
+regs_mrf.beta    = 5;      % Similarity of S
+regs_mrf.eta     = 10;      % Similarity of P
+regs_mrf.mu      = 1e6;    % Commutative penalty
+regs_mrf.delta1  = 1e-3;    % Small number for reweighted
 
 regs_poly = struct();
 regs_poly.alpha   = 1;      % Sparsity of S
@@ -57,7 +57,8 @@ regs_poly.mu      = 1e4;    % Commutative penalty
 regs_poly.delta1  = 1e-3;   % Small number for reweighted
 
 % LVGL, FGL, Our, Ours GMRF
-models = {'LVGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}'};
+models = {'LVGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}',
+    'LVGL,C_{MRF}','FGL,C_{MRF}','PGL,C_{MRF}'};
 
 %%
 err1 = zeros(length(models),length(p_rew_links),nG);
@@ -87,11 +88,12 @@ for g = 1:nG
 
 
         %%%% Estimates of LatentVariable-GL %%%%
+        A_lvgl_mrf = zeros(O,O,K);
         A_lvgl_poly = zeros(O,O,K);
         for k=1:K
-%             % With C mrf
-%             A_lvgl_mrf = LVGLASSO(Co_mrf(:,:,k),regs_lvgl_mrf,false);
-%             A_lvgl_mrf = A_lvgl_mrf./max(max(A_lvgl_mrf));
+            % With C mrf
+            A_lvgl_mrf(:,:,k) = LVGLASSO(Co_mrf(:,:,k),regs_lvgl_mrf,false);
+            A_lvgl_mrf(:,:,k) = A_lvgl_mrf(:,:,k)./max(max(A_lvgl_mrf(:,:,k)));
 
             % With C poly
             A_lvgl_poly(:,:,k) = LVGLASSO(Co_poly(:,:,k),regs_lvgl_poly,false);
@@ -100,9 +102,9 @@ for g = 1:nG
 
 
         %%%% Estimates of Fusion-GL %%%%
-%         % With mrf
-%         A_fgl_mrf = fglasso(Co_mrf,regs_ggl_mrf);
-%         A_fgl_mrf = A_fgl_mrf./max(max(A_fgl_mrf));
+        % With mrf
+        A_fgl_mrf = fglasso(Co_mrf,regs_ggl_mrf);
+        A_fgl_mrf = A_fgl_mrf./max(max(A_fgl_mrf));
 
         % With C poly
         A_fgl_poly = fglasso(Co_poly,regs_ggl_poly);
@@ -114,11 +116,11 @@ for g = 1:nG
 
         %%%% Estimates of Pgl %%%%
         % With C mrf
-%         A_pgl_mrf = estA_pgl_colsp_rw(   ,regs_mrf,max_iters);
-%         A_pgl_mrf = A_pgl_mrf./max(max(A_pgl_mrf));
+        A_pgl_mrf = PGL_rw(Co_mrf,regs_mrf,max_iters);
+        A_pgl_mrf = A_pgl_mrf./max(max(A_pgl_mrf));
 
         % With C poly
-        [A_pgl_poly,~] = estA_pgl_colsp_rw(Co_poly,regs_poly,max_iters);
+        [A_pgl_poly,~] = PGL_rw(Co_poly,regs_poly,max_iters);
         A_pgl_poly = A_pgl_poly./max(max(A_pgl_poly));
 
        % Compute error
@@ -130,14 +132,23 @@ for g = 1:nG
             err1_g(1,i) = err1_g(1,i) + (norm(Aok-A_lvgl_poly(:,:,k),'fro')/norm_Aok)^2/K;
             err1_g(2,i) = err1_g(2,i) + (norm(Aok-A_fgl_poly(:,:,k),'fro')/norm_Aok)^2/K;
             err1_g(3,i) = err1_g(3,i) + (norm(Aok-A_pgl_poly(:,:,k),'fro')/norm_Aok)^2/K;
+            err1_g(4,i) = err1_g(4,i) + (norm(Aok-A_lvgl_mrf(:,:,k),'fro')/norm_Aok)^2/K;
+            err1_g(5,i) = err1_g(5,i) + (norm(Aok-A_fgl_mrf(:,:,k),'fro')/norm_Aok)^2/K;
+            err1_g(6,i) = err1_g(6,i) + (norm(Aok-A_pgl_mrf(:,:,k),'fro')/norm_Aok)^2/K;
 
             A_lvgl_poly_n = A_lvgl_poly(:,:,k)/norm(A_lvgl_poly(:,:,k),'fro');
             A_fgl_poly_n = A_fgl_poly(:,:,k)/norm(A_fgl_poly(:,:,k),'fro');
             A_pgl_poly_n = A_pgl_poly(:,:,k)/norm(A_pgl_poly(:,:,k),'fro');
+            A_lvgl_mrf_n = A_lvgl_poly(:,:,k)/norm(A_lvgl_poly(:,:,k),'fro');
+            A_fgl_mrf_n = A_fgl_poly(:,:,k)/norm(A_fgl_poly(:,:,k),'fro');
+            A_pgl_mrf_n = A_pgl_poly(:,:,k)/norm(A_pgl_poly(:,:,k),'fro');
 
             err2_g(1,i) = err2_g(1,i) + norm(Aok_n-A_lvgl_poly_n,'fro')^2/K;
             err2_g(2,i) = err2_g(2,i) + norm(Aok_n-A_fgl_poly_n,'fro')^2/K;
-            err2_g(3,i) = err2_g(3,i) + norm(Aok_n-A_pgl_poly_n,'fro')^2/K;            
+            err2_g(3,i) = err2_g(3,i) + norm(Aok_n-A_pgl_poly_n,'fro')^2/K;
+            err2_g(4,i) = err2_g(1,i) + norm(Aok_n-A_lvgl_mrf_n,'fro')^2/K;
+            err2_g(5,i) = err2_g(2,i) + norm(Aok_n-A_fgl_mrf_n,'fro')^2/K;
+            err2_g(6,i) = err2_g(3,i) + norm(Aok_n-A_pgl_mrf_n,'fro')^2/K;
         end
 
         if mod(g,verb_freq) == 1
