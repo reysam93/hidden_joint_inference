@@ -4,7 +4,7 @@ addpath(genpath('utils'));
 addpath(genpath('opt'));
 
 n_graphs = 30;
-sig_trials = 5; %10;
+sig_trials = 10;
 
 K = 3;
 N = 20;
@@ -16,7 +16,6 @@ Ms = [1e2, 1e3, 1e4, 1e5]; %round(logspace(2,6,9));
 hid_nodes = 'min';
 max_iters = 10;
 verb_freq = 20;
-%th = 0.3;
 
 leg = {'LVGL,$C_{mrf}$','GGL,$C_{mrf}$','FGL,$C_{mrf}$','PGL,$C_{mrf}$',...
     'LVGL,$C_{poly}$','GGL,$C_{poly}$','FGL,$C_{poly}$','PGL,$C_{poly}$'};
@@ -68,9 +67,7 @@ Aos_fgl_mrf = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 Aos_ggl_poly = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 Aos_fgl_poly = zeros(O,O,K,length(Ms),sig_trials,n_graphs);
 
-parfor g=1:n_graphs
-    disp(['G: ' num2str(g)])
-    
+parfor g=1:n_graphs    
     % Create graphs and get hidden nodes
     A = generate_connected_ER(N,p);
     As = gen_similar_graphs(A,K,pert_links);
@@ -78,22 +75,19 @@ parfor g=1:n_graphs
     Ao = As(n_o,n_o,:);
     
     % True Cmrf
-    Cs_mrf_true = zeros(N,N,K);
-    for k=1:K
-        eigvals = eig(As(:,:,k));
-        C_inv = (0.01-min(eigvals))*eye(N,N) + (0.9+0.1*rand(1,1))*As(:,:,k);
-        Cs_mrf_true(:,:,k) = inv(C_inv);
-    end
+    Cs_mrf_true = create_cov(As,F,inf,false,'mrf');
+    Cs_poly_true = create_cov(As,F,inf,false,'poly');
     
-    % Graph filter (for C poly)
-    H = zeros(N,N,K);
-    for k=1:K
-        h = rand(F,1)*2-1;
-        %h = h/norm(h,1);
-        for f=1:F
-            H(:,:,k) = H(:,:,k) + h(f)*As(:,:,k)^(f-1);
-        end
-    end
+%     % Graph filter (for C poly)
+%     H = zeros(N,N,K);
+%     for k=1:K
+%         % h = rand(F,1)*2-1;
+%         h = rand(F,1);
+%         h = h/norm(h,1);
+%         for f=1:F
+%             H(:,:,k) = H(:,:,k) + h(f)*As(:,:,k)^(f-1);
+%         end
+%     end
     
     P_mrf_g = zeros(O,O,K,length(Ms),sig_trials);
     Aos_lvgl_mrf_g = zeros(O,O,K,length(Ms),sig_trials);
@@ -112,12 +106,12 @@ parfor g=1:n_graphs
         for k=1:K
             W = randn(N,max_M);
             X_mrf(:,:,k) = sqrtm(Cs_mrf_true(:,:,k))*W;
-            X_poly(:,:,k) = H(:,:,k)*W;
+            X_poly(:,:,k) = sqrtm(Cs_poly_true(:,:,k))*W;
+            %X_poly(:,:,k) = H(:,:,k)*W;
         end
         
         for i=1:length(Ms)
             M = Ms(i);
-            disp(['   M: ' num2str(M)])
             
             % Compute covariance
             Cs_mrf = zeros(N,N,K);
@@ -125,9 +119,6 @@ parfor g=1:n_graphs
             for k=1:K
                 Cs_mrf(:,:,k) = X_mrf(:,1:M,k)*X_mrf(:,1:M,k)'/M;
                 Cs_poly(:,:,k) = X_poly(:,1:M,k)*X_poly(:,1:M,k)'/M;
-                disp(['- k: ' num2str(k) ' norm Ck mrf '...
-                num2str(norm(Cs_mrf(:,:,k),'fro')) ' norm Ck poly '...
-                num2str(norm(Cs_poly(:,:,k),'fro'))])
             end
             Co_mrf = Cs_mrf(n_o,n_o,:);
             Co_poly = Cs_poly(n_o,n_o,:);
@@ -163,12 +154,17 @@ parfor g=1:n_graphs
 
             %%%% Estimates of Pgl %%%%
             % With mrf
-            Ao_hat = estA_pgl_colsp_rw(Co_mrf,regs_mrf,max_iters);
+            Ao_hat = PGL_rw(Co_mrf,regs_mrf,max_iters);
             Aos_pgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
             
             % With C poly
-            [Ao_hat,~] = estA_pgl_colsp_rw(Co_poly,regs_poly,max_iters);
+            [Ao_hat,~] = PGL_rw(Co_poly,regs_poly,max_iters);
             Aos_pgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+
+            if mod(g,verb_freq) == 1
+                disp(['G: ' num2str(g) ' M: ' num2str(M) ' Sig trial: '...
+                      num2str(sig_trials)])
+            end
         end
     end
     Aos(:,:,:,g) = Ao;
@@ -220,14 +216,14 @@ mean_err = squeeze(mean(mean(mean(err,1),4),5));
 mark_s = 8;
 line_w = 2;
 
-leg(5) = [];
+%leg(5) = [];
 
 figure();
 semilogx(Ms,mean_err(:,1),':x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,2),':v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,3),':s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,4),':o','LineWidth',line_w,'MarkerSize',mark_s); hold on
-% semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,6),'-v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,7),'-s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,8),'-o','LineWidth',line_w,'MarkerSize',mark_s); hold off
