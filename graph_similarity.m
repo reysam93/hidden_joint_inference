@@ -6,8 +6,8 @@ clear
 
 % Exp parameters
 nG = 30;
-p_rew_links = [0, .1, .2, .3];
-K = 3;
+p_rew_links = [0, .05, .1, .15, .2, .25, .3];
+K = 4;
 N = 20;
 O = 19;
 H = N-O;
@@ -29,13 +29,13 @@ regs_lvgl_poly.alpha = 5e-3;
 regs_lvgl_poly.beta = 5e-3;
 
 % REGS FGL
-regs_ggl_mrf = struct();
-regs_ggl_mrf.lambda1 = 1e-3;
-regs_ggl_mrf.lambda2 = 1e-3;
+regs_fgl_mrf = struct();
+regs_fgl_mrf.lambda1 = 1e-3;
+regs_fgl_mrf.lambda2 = 1e-3;
 
-regs_ggl_poly = struct();
-regs_ggl_poly.lambda1 = 1e-1;
-regs_ggl_poly.lambda2 = 1e-1;
+regs_fgl_poly = struct();
+regs_fgl_poly.lambda1 = 1e-1;
+regs_fgl_poly.lambda2 = 1e-1;
 
 
 % REGS PGL
@@ -69,8 +69,11 @@ for g = 1:nG
     [n_o, n_h] = select_hidden_nodes(hid_nodes,O,A);
 
     % Filter coeffs h are independent of graph similarity
-    h = rand(L,1)*2;
-    h = h/norm(h,1);
+    hs = zeros(L,K);
+    for k=1:K
+        hs(:,k) = rand(L,1);
+        hs(:,k) = hs(:,k)/norm(hs(:,k),1);
+    end
 
     err1_g = zeros(length(models),length(p_rew_links));
     err2_g = zeros(length(models),length(p_rew_links));
@@ -82,10 +85,9 @@ for g = 1:nG
 
         % Create covariances
         Cs_mrf = create_cov(As,L,M,sampled,'mrf');
-        Cs_poly = create_cov(As,L,M,sampled,'poly');
+        Cs_poly = create_cov(As,L,M,sampled,'poly',hs);
         Co_mrf = Cs_mrf(n_o,n_o,:);
         Co_poly = Cs_poly (n_o,n_o,:);
-
 
         %%%% Estimates of LatentVariable-GL %%%%
         A_lvgl_mrf = zeros(O,O,K);
@@ -103,11 +105,11 @@ for g = 1:nG
 
         %%%% Estimates of Fusion-GL %%%%
         % With mrf
-        A_fgl_mrf = fglasso(Co_mrf,regs_ggl_mrf);
+        A_fgl_mrf = fglasso(Co_mrf,regs_fgl_mrf);
         A_fgl_mrf = A_fgl_mrf./max(max(A_fgl_mrf));
 
         % With C poly
-        A_fgl_poly = fglasso(Co_poly,regs_ggl_poly);
+        A_fgl_poly = fglasso(Co_poly,regs_fgl_poly);
         A_fgl_poly = A_fgl_poly./max(max(A_fgl_poly));
 
 
@@ -139,16 +141,16 @@ for g = 1:nG
             A_lvgl_poly_n = A_lvgl_poly(:,:,k)/norm(A_lvgl_poly(:,:,k),'fro');
             A_fgl_poly_n = A_fgl_poly(:,:,k)/norm(A_fgl_poly(:,:,k),'fro');
             A_pgl_poly_n = A_pgl_poly(:,:,k)/norm(A_pgl_poly(:,:,k),'fro');
-            A_lvgl_mrf_n = A_lvgl_poly(:,:,k)/norm(A_lvgl_poly(:,:,k),'fro');
-            A_fgl_mrf_n = A_fgl_poly(:,:,k)/norm(A_fgl_poly(:,:,k),'fro');
-            A_pgl_mrf_n = A_pgl_poly(:,:,k)/norm(A_pgl_poly(:,:,k),'fro');
+            A_lvgl_mrf_n = A_lvgl_mrf(:,:,k)/norm(A_lvgl_mrf(:,:,k),'fro');
+            A_fgl_mrf_n = A_fgl_mrf(:,:,k)/norm(A_fgl_mrf(:,:,k),'fro');
+            A_pgl_mrf_n = A_pgl_mrf(:,:,k)/norm(A_pgl_mrf(:,:,k),'fro');
 
             err2_g(1,i) = err2_g(1,i) + norm(Aok_n-A_lvgl_poly_n,'fro')^2/K;
             err2_g(2,i) = err2_g(2,i) + norm(Aok_n-A_fgl_poly_n,'fro')^2/K;
             err2_g(3,i) = err2_g(3,i) + norm(Aok_n-A_pgl_poly_n,'fro')^2/K;
-            err2_g(4,i) = err2_g(1,i) + norm(Aok_n-A_lvgl_mrf_n,'fro')^2/K;
-            err2_g(5,i) = err2_g(2,i) + norm(Aok_n-A_fgl_mrf_n,'fro')^2/K;
-            err2_g(6,i) = err2_g(3,i) + norm(Aok_n-A_pgl_mrf_n,'fro')^2/K;
+            err2_g(4,i) = err2_g(4,i) + norm(Aok_n-A_lvgl_mrf_n,'fro')^2/K;
+            err2_g(5,i) = err2_g(5,i) + norm(Aok_n-A_fgl_mrf_n,'fro')^2/K;
+            err2_g(6,i) = err2_g(6,i) + norm(Aok_n-A_pgl_mrf_n,'fro')^2/K;
         end
 
         if mod(g,verb_freq) == 1
@@ -164,31 +166,35 @@ disp(['----- ' num2str(t/60) ' mins -----'])
 
 %%
 mean_err = mean(err1,3);
-mean_err_no_sa = mean(err2,3);
+mean_err2 = mean(err2,3);
 
 figure()
 plot(p_rew_links,mean_err)
 legend(models)
 xlabel('Prop. diff. links')
+ylim([0 1])
 
 figure()
-plot(p_rew_links,mean_err_no_sa)
+plot(p_rew_links,mean_err2)
 legend(models)
 xlabel('Prop. diff. links')
+ylim([0 1])
 
 %%
 median_err = median(err1,3);
-median_err_no_sa = median(err2,3);
+median_err2 = median(err2,3);
 
 figure()
 plot(p_rew_links,median_err)
 legend(models)
 xlabel('Prop. diff. links')
+ylim([0 1])
 
 figure()
-plot(p_rew_links,median_err_no_sa)
+plot(p_rew_links,median_err2)
 legend(models)
 xlabel('Prop. diff. links')
+ylim([0 1])
 
 
 
