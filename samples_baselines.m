@@ -12,39 +12,25 @@ O = 19;
 p = 0.2;
 F = 3;
 pert_links = 3;
-Ms = [1e2, 1e3, 1e4, 1e5]; %round(logspace(2,6,9));
+Ms = round(logspace(2,6,9));
 hid_nodes = 'min';
 max_iters = 10;
 verb_freq = 20;
 
-leg = {'LVGL,$C_{mrf}$','GGL,$C_{mrf}$','FGL,$C_{mrf}$','PGL,$C_{mrf}$',...
-    'LVGL,$C_{poly}$','GGL,$C_{poly}$','FGL,$C_{poly}$','PGL,$C_{poly}$'};
+leg = {'LVGL,C_{mrf}','GGL,C_{mrf}','FGL,C_{mrf}','PGL,C_{mrf}',...
+    'LVGL,C_{poly}','GGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}'};
 
+%%%%% REGS %%%%%
+% LVGL
 regs_lvgl_mrf = struct();
 regs_lvgl_mrf.alpha = 1e-2;
 regs_lvgl_mrf.beta = 1e-3;
-
-regs_mrf = struct();
-regs_mrf.alpha   = 1;       % Sparsity of S
-regs_mrf.gamma   = 1e4;      % Group Lasso
-regs_mrf.beta    = 5;      % Similarity of S
-regs_mrf.eta     = 10;      % Similarity of P
-regs_mrf.mu      = 1e6;    % Commutative penalty
-regs_mrf.delta1  = 1e-3;    % Small number for reweighted
 
 regs_lvgl_poly = struct();
 regs_lvgl_poly.alpha = 5e-3;
 regs_lvgl_poly.beta = 5e-3;
 
-% OLD REGS
-regs_poly = struct();
-regs_poly.alpha   = 1;       % Sparsity of S
-regs_poly.gamma   = 100;      % Group Lasso
-regs_poly.beta    = 5;      % Similarity of S
-regs_poly.eta     = 5;      % Similarity of P
-regs_poly.mu      = 1e3;    % Commutative penalty
-regs_poly.delta1  = 1e-3;    % Small number for reweighted
-
+% GGL and FGL
 regs_ggl_mrf = struct();
 regs_ggl_mrf.lambda1 = 1e-3;
 regs_ggl_mrf.lambda2 = 1e-3;
@@ -52,6 +38,27 @@ regs_ggl_mrf.lambda2 = 1e-3;
 regs_ggl_poly = struct();
 regs_ggl_poly.lambda1 = 1e-1;
 regs_ggl_poly.lambda2 = 1e-1;
+
+% PGL
+
+regs_mrf = struct();
+regs_mrf.alpha   = 1;       % Sparsity of S
+regs_mrf.gamma   = 1e4;      % Group Lasso
+regs_mrf.beta    = 10;      % Similarity of S
+regs_mrf.eta     = 25;      % Similarity of P
+regs_mrf.mu      = 1e4;    % Commutative penalty
+regs_mrf.delta1  = 1e-3;    % Small number for reweighted
+
+% OLD REGS
+regs_poly = struct();
+regs_poly.alpha   = 1;       % Sparsity of S
+regs_poly.gamma   = 100;      % Group Lasso
+regs_poly.beta    = 10;      % Similarity of S
+regs_poly.eta     = 10;      % Similarity of P
+regs_poly.mu      = 1e4;    % Commutative penalty
+regs_poly.delta1  = 1e-3;    % Small number for reweighted
+
+
 
 max_M = Ms(end);
 
