@@ -126,36 +126,36 @@ parfor g=1:n_graphs
                 Aos_lvgl_poly_g(:,:,k,i,j) = Ao_hat./max(max(Ao_hat));
             end
             
-%             %%%% Estimates of Group-GL %%%%
-%             % With mrf
-%             Ao_hat = gglasso(Co_mrf,regs_ggl_mrf);
-%             Aos_ggl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-% 
-%             % With C poly
-%             Ao_hat = gglasso(Co_poly,regs_ggl_poly);
-%             Aos_ggl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-% 
-%             %%%% Estimates of Fusion-GL %%%%
-%             % With mrf
-%             Ao_hat = fglasso(Co_mrf,regs_ggl_mrf);
-%             Aos_fgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-% 
-%             % With C poly
-%             Ao_hat = fglasso(Co_poly,regs_ggl_poly);
-%             Aos_fgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-% 
-%             %%%% Estimates of Pgl %%%%
-%             % With mrf
-%             Ao_hat = PGL_rw(Co_mrf,regs_mrf,max_iters);
-%             Aos_pgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-%             
-%             % With C poly
-%             [Ao_hat,~] = PGL_rw(Co_poly,regs_poly,max_iters);
-%             Aos_pgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+            %%%% Estimates of Group-GL %%%%
+            % With mrf
+            Ao_hat = gglasso(Co_mrf,regs_ggl_mrf);
+            Aos_ggl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+
+            % With C poly
+            Ao_hat = gglasso(Co_poly,regs_ggl_poly);
+            Aos_ggl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+
+            %%%% Estimates of Fusion-GL %%%%
+            % With mrf
+            Ao_hat = fglasso(Co_mrf,regs_ggl_mrf);
+            Aos_fgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+
+            % With C poly
+            Ao_hat = fglasso(Co_poly,regs_ggl_poly);
+            Aos_fgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+
+            %%%% Estimates of Pgl %%%%
+            % With mrf
+            Ao_hat = PGL_rw(Co_mrf,regs_mrf,max_iters);
+            Aos_pgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+            
+            % With C poly
+            [Ao_hat,~] = PGL_rw(Co_poly,regs_poly,max_iters);
+            Aos_pgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
 
             if mod(g,verb_freq) == 1
                 disp(['G: ' num2str(g) ' M: ' num2str(M) ' Sig trial: '...
-                      num2str(j) ' NaNs:' num2str(sum(isnan(Aos_lvgl_mrf_g(:)))/length(Aos_lvgl_mrf_g(:)))])
+                      num2str(j)])
             end
         end
     end
