@@ -2,12 +2,10 @@ rng(10)
 addpath(genpath('utils'));
 addpath(genpath('opt'));
 
-clear
-
 % Exp parameters
-nG = 30;
-p_rew_links = [0, .05, .1, .15, .2, .25, .3];
-K = 4;
+nG = 50;
+p_rew_links = [0, .05, .1, .15, .2, .25, .3, .35, .4];
+K = 3;
 N = 20;
 O = 19;
 H = N-O;
@@ -19,19 +17,20 @@ hid_nodes = 'min';
 max_iters = 10;
 verb_freq = 20;
 
+%%%%% REGS %%%%%
 % REGS LVG
 regs_lvgl_mrf = struct();
-regs_lvgl_mrf.alpha = 1e-2;
+regs_lvgl_mrf.alpha = 1e-3;
 regs_lvgl_mrf.beta = 1e-3;
 
 regs_lvgl_poly = struct();
 regs_lvgl_poly.alpha = 5e-3;
-regs_lvgl_poly.beta = 5e-3;
+regs_lvgl_poly.beta = 5e-3; % 3e-3 or 5e-3
 
 % REGS FGL
 regs_fgl_mrf = struct();
 regs_fgl_mrf.lambda1 = 1e-3;
-regs_fgl_mrf.lambda2 = 1e-3;
+regs_fgl_mrf.lambda2 = 5e-1;
 
 regs_fgl_poly = struct();
 regs_fgl_poly.lambda1 = 1e-1;
@@ -42,17 +41,17 @@ regs_fgl_poly.lambda2 = 1e-1;
 % NEED ADJUSTING
 regs_mrf = struct();
 regs_mrf.alpha   = 1;       % Sparsity of S
-regs_mrf.gamma   = 1e4;      % Group Lasso
-regs_mrf.beta    = 5;      % Similarity of S
-regs_mrf.eta     = 10;      % Similarity of P
-regs_mrf.mu      = 1e6;    % Commutative penalty
+regs_mrf.gamma   = 1e4;     % Group Lasso
+regs_mrf.beta    = 10;      % Similarity of S
+regs_mrf.eta     = 25;      % Similarity of P
+regs_mrf.mu      = 1e4;     % Commutative penalty
 regs_mrf.delta1  = 1e-3;    % Small number for reweighted
 
 regs_poly = struct();
 regs_poly.alpha   = 1;      % Sparsity of S
 regs_poly.gamma   = 100;    % Group Lasso (each P)
-regs_poly.beta    = 10;      % Similarity of Ss
-regs_poly.eta     = 10;      % Similarity of Ps
+regs_poly.beta    = 10;     % Similarity of Ss
+regs_poly.eta     = 10;     % Similarity of Ps
 regs_poly.mu      = 1e4;    % Commutative penalty
 regs_poly.delta1  = 1e-3;   % Small number for reweighted
 
@@ -64,7 +63,7 @@ models = {'LVGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}',...
 err1 = zeros(length(models),length(p_rew_links),nG);
 err2 = zeros(length(models),length(p_rew_links),nG);
 tic
-for g = 1:nG
+parfor g = 1:nG
     A = generate_connected_ER(N,p);
     [n_o, n_h] = select_hidden_nodes(hid_nodes,O,A);
 
@@ -153,7 +152,7 @@ for g = 1:nG
             err2_g(6,i) = err2_g(6,i) + norm(Aok_n-A_pgl_mrf_n,'fro')^2/K;
         end
 
-        if mod(g,verb_freq) == 1
+        if mod(g,verb_freq) == 0
             disp(['Graph: ' num2str(g) ' Rew links: ' num2str(n_rew_links) ' Err: ' num2str(err1_g(3,i))])
         end
 
@@ -172,29 +171,33 @@ figure()
 plot(p_rew_links,mean_err)
 legend(models)
 xlabel('Prop. diff. links')
-ylim([0 1])
+ylabel('Mean Err')
+ylim([0 .5])
 
 figure()
 plot(p_rew_links,mean_err2)
 legend(models)
 xlabel('Prop. diff. links')
-ylim([0 1])
+ylim([0 .5])
+ylabel('Mean Err2')
 
 %%
 median_err = median(err1,3);
 median_err2 = median(err2,3);
-
+ 
 figure()
 plot(p_rew_links,median_err)
 legend(models)
 xlabel('Prop. diff. links')
-ylim([0 1])
+ylim([0 .5])
+ylabel('Median Err')
 
 figure()
 plot(p_rew_links,median_err2)
 legend(models)
 xlabel('Prop. diff. links')
-ylim([0 1])
+ylim([0 .5])
+ylabel('Median Err2')
 
 
 
