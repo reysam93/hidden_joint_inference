@@ -166,7 +166,7 @@ parfor g=1:n_graphs
 
             if mod(g,verb_freq) == 1
                 disp(['G: ' num2str(g) ' M: ' num2str(M) ' Sig trial: '...
-                      num2str(sig_trials)])
+                      num2str(j)])
             end
         end
     end
@@ -232,6 +232,63 @@ semilogx(Ms,mean_err(:,7),'-s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,8),'-o','LineWidth',line_w,'MarkerSize',mark_s); hold off
 xlabel('(b) Number of samples')
 ylabel('Mean error')
+legend(leg,'Location','east')
+grid on
+% ylim([0 1.5])
+set(gca,'FontSize',16);
+set(gcf, 'PaperPositionMode', 'auto')
+
+
+%% Plot mean/median error2
+err = zeros(K,length(Ms),length(leg),sig_trials,n_graphs);
+for g=1:n_graphs
+    for j=1:sig_trials
+        for k=1:K
+            norm_A = norm(Aos(:,:,k,g),'fro')^2;
+            for i=1:length(Ms)
+                % Matrices normalized to norm 1
+                Aok_n = Aos(:,:,k,g)/norm(Aos(:,:,k,g),'fro');
+                Aos_lvgl_mrf_n = Aos_lvgl_mrf(:,:,k,i,j,g)/norm(Aos_lvgl_mrf(:,:,k,i,j,g),'fro');
+                Aos_ggl_mrf_n = Aos_ggl_mrf(:,:,k,i,j,g)/norm(Aos_ggl_mrf(:,:,k,i,j,g),'fro');
+                Aos_fgl_mrf_n = Aos_fgl_mrf(:,:,k,i,j,g)/norm(Aos_fgl_mrf(:,:,k,i,j,g),'fro');
+                Aos_pgl_mrf_n = Aos_pgl_mrf(:,:,k,i,j,g)/norm(Aos_pgl_mrf(:,:,k,i,j,g),'fro');
+                Aos_lvgl_poly_n = Aos_lvgl_poly(:,:,k,i,j,g)/norm(Aos_lvgl_poly(:,:,k,i,j,g),'fro');
+                Aos_ggl_poly_n = Aos_ggl_poly(:,:,k,i,j,g)/norm(Aos_ggl_poly(:,:,k,i,j,g),'fro');
+                Aos_fgl_poly_n = Aos_fgl_poly(:,:,k,i,j,g)/norm(Aos_fgl_poly(:,:,k,i,j,g),'fro');
+                Aos_pgl_poly_n = Aos_pgl_poly(:,:,k,i,j,g)/norm(Aos_pgl_poly(:,:,k,i,j,g),'fro');
+
+                err(k,i,1,j,g) = norm(Aok_n-Aos_lvgl_mrf_n,'fro')^2;
+                err(k,i,2,j,g) = norm(Aok_n-Aos_ggl_mrf(:,:,k,i,j,g),'fro');
+                err(k,i,3,j,g) = norm(Aok_n-Aos_fgl_mrf_n,'fro')^2;
+                err(k,i,4,j,g) = norm(Aok_n-Aos_pgl_mrf_n,'fro')^2;
+                err(k,i,5,j,g) = norm(Aok_n-Aos_lvgl_poly_n,'fro')^2;
+                err(k,i,6,j,g) = norm(Aok_n-Aos_ggl_poly_n,'fro')^2;
+                err(k,i,7,j,g) = norm(Aok_n-Aos_fgl_poly_n,'fro')^2;
+                err(k,i,8,j,g) = norm(Aok_n-Aos_pgl_poly_n,'fro')^2;
+            end
+        end
+    end
+end
+
+mean_err = squeeze(mean(mean(mean(err,1),4),5));
+
+% Plot properties
+mark_s = 8;
+line_w = 2;
+
+%leg(5) = [];
+
+figure();
+semilogx(Ms,mean_err(:,1),':x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,2),':v','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,3),':s','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,4),':o','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,6),'-v','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,7),'-s','LineWidth',line_w,'MarkerSize',mark_s); hold on
+semilogx(Ms,mean_err(:,8),'-o','LineWidth',line_w,'MarkerSize',mark_s); hold off
+xlabel('(b) Number of samples')
+ylabel('Mean error 2')
 legend(leg,'Location','east')
 grid on
 % ylim([0 1.5])
