@@ -23,7 +23,7 @@ leg = {'LVGL,C_{mrf}','GGL,C_{mrf}','FGL,C_{mrf}','PGL,C_{mrf}',...
 %%%%% REGS %%%%%
 % LVGL
 regs_lvgl_mrf = struct();
-regs_lvgl_mrf.alpha = 1e-2;
+regs_lvgl_mrf.alpha = 1e-3;
 regs_lvgl_mrf.beta = 1e-3;
 
 regs_lvgl_poly = struct();
@@ -81,17 +81,6 @@ parfor g=1:n_graphs
     Cs_mrf_true = create_cov(As,F,inf,false,'mrf');
     Cs_poly_true = create_cov(As,F,inf,false,'poly');
     
-%     % Graph filter (for C poly)
-%     H = zeros(N,N,K);
-%     for k=1:K
-%         % h = rand(F,1)*2-1;
-%         h = rand(F,1);
-%         h = h/norm(h,1);
-%         for f=1:F
-%             H(:,:,k) = H(:,:,k) + h(f)*As(:,:,k)^(f-1);
-%         end
-%     end
-    
     P_mrf_g = zeros(O,O,K,length(Ms),sig_trials);
     Aos_lvgl_mrf_g = zeros(O,O,K,length(Ms),sig_trials);
     Aos_pgl_mrf_g = zeros(O,O,K,length(Ms),sig_trials);
@@ -137,36 +126,36 @@ parfor g=1:n_graphs
                 Aos_lvgl_poly_g(:,:,k,i,j) = Ao_hat./max(max(Ao_hat));
             end
             
-            %%%% Estimates of Group-GL %%%%
-            % With mrf
-            Ao_hat = gglasso(Co_mrf,regs_ggl_mrf);
-            Aos_ggl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-
-            % With C poly
-            Ao_hat = gglasso(Co_poly,regs_ggl_poly);
-            Aos_ggl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-
-            %%%% Estimates of Fusion-GL %%%%
-            % With mrf
-            Ao_hat = fglasso(Co_mrf,regs_ggl_mrf);
-            Aos_fgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-
-            % With C poly
-            Ao_hat = fglasso(Co_poly,regs_ggl_poly);
-            Aos_fgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-
-            %%%% Estimates of Pgl %%%%
-            % With mrf
-            Ao_hat = PGL_rw(Co_mrf,regs_mrf,max_iters);
-            Aos_pgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
-            
-            % With C poly
-            [Ao_hat,~] = PGL_rw(Co_poly,regs_poly,max_iters);
-            Aos_pgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+%             %%%% Estimates of Group-GL %%%%
+%             % With mrf
+%             Ao_hat = gglasso(Co_mrf,regs_ggl_mrf);
+%             Aos_ggl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+% 
+%             % With C poly
+%             Ao_hat = gglasso(Co_poly,regs_ggl_poly);
+%             Aos_ggl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+% 
+%             %%%% Estimates of Fusion-GL %%%%
+%             % With mrf
+%             Ao_hat = fglasso(Co_mrf,regs_ggl_mrf);
+%             Aos_fgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+% 
+%             % With C poly
+%             Ao_hat = fglasso(Co_poly,regs_ggl_poly);
+%             Aos_fgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+% 
+%             %%%% Estimates of Pgl %%%%
+%             % With mrf
+%             Ao_hat = PGL_rw(Co_mrf,regs_mrf,max_iters);
+%             Aos_pgl_mrf_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
+%             
+%             % With C poly
+%             [Ao_hat,~] = PGL_rw(Co_poly,regs_poly,max_iters);
+%             Aos_pgl_poly_g(:,:,:,i,j) = Ao_hat./max(max(Ao_hat));
 
             if mod(g,verb_freq) == 1
                 disp(['G: ' num2str(g) ' M: ' num2str(M) ' Sig trial: '...
-                      num2str(j)])
+                      num2str(j) ' NaNs:' num2str(sum(isnan(Aos_lvgl_mrf_g(:)))/length(Aos_lvgl_mrf_g(:)))])
             end
         end
     end
@@ -219,14 +208,16 @@ mean_err = squeeze(mean(mean(mean(err,1),4),5));
 mark_s = 8;
 line_w = 2;
 
-%leg(5) = [];
+leg = {'LVGL,C_{mrf}','GGL,C_{mrf}','FGL,C_{mrf}','PGL,C_{mrf}',...
+    'LVGL,C_{poly}','GGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}'};
+leg(5) = [];
 
 figure();
 semilogx(Ms,mean_err(:,1),':x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,2),':v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,3),':s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,4),':o','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+%semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,6),'-v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,7),'-s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,8),'-o','LineWidth',line_w,'MarkerSize',mark_s); hold off
@@ -258,7 +249,7 @@ for g=1:n_graphs
                 Aos_pgl_poly_n = Aos_pgl_poly(:,:,k,i,j,g)/norm(Aos_pgl_poly(:,:,k,i,j,g),'fro');
 
                 err(k,i,1,j,g) = norm(Aok_n-Aos_lvgl_mrf_n,'fro')^2;
-                err(k,i,2,j,g) = norm(Aok_n-Aos_ggl_mrf(:,:,k,i,j,g),'fro');
+                err(k,i,2,j,g) = norm(Aok_n-Aos_ggl_mrf_n,'fro')^2;
                 err(k,i,3,j,g) = norm(Aok_n-Aos_fgl_mrf_n,'fro')^2;
                 err(k,i,4,j,g) = norm(Aok_n-Aos_pgl_mrf_n,'fro')^2;
                 err(k,i,5,j,g) = norm(Aok_n-Aos_lvgl_poly_n,'fro')^2;
@@ -276,14 +267,16 @@ mean_err = squeeze(mean(mean(mean(err,1),4),5));
 mark_s = 8;
 line_w = 2;
 
-%leg(5) = [];
+leg = {'LVGL,C_{mrf}','GGL,C_{mrf}','FGL,C_{mrf}','PGL,C_{mrf}',...
+    'LVGL,C_{poly}','GGL,C_{poly}','FGL,C_{poly}','PGL,C_{poly}'};
+leg(5) = [];
 
 figure();
 semilogx(Ms,mean_err(:,1),':x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,2),':v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,3),':s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,4),':o','LineWidth',line_w,'MarkerSize',mark_s); hold on
-semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
+%semilogx(Ms,mean_err(:,5),'-x','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,6),'-v','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,7),'-s','LineWidth',line_w,'MarkerSize',mark_s); hold on
 semilogx(Ms,mean_err(:,8),'-o','LineWidth',line_w,'MarkerSize',mark_s); hold off
