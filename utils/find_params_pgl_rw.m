@@ -22,11 +22,11 @@ max_iters = 10;
 th = 0.3;
 verb_freq = 10;
 
-deltas = [1e-2 1e-3 1e-4];
+deltas = [1e-3];
 gammas = [10 25 50 75 100];
 betas = [25 50 100];
 etas = [25 50 100];
-mus = [500 1000 2000];
+mus = [10000];
 
 err = zeros(length(mus),length(etas),length(betas),length(gammas),...
     length(deltas),n_graphs);
@@ -36,7 +36,7 @@ parfor g=1:n_graphs
     A = generate_connected_ER(N,p);
     [n_o, n_h] = select_hidden_nodes(hid_nodes,O,A);
     if REW_ONLY_OBS
-        As = gen_similar_graphs_hid(A,Ks(end),pert_links,n_o,n_h);
+        As = gen_similar_graphs_hid(A,Ks(end),rew_links,n_o,n_h);
     else
         As = gen_similar_graphs(A,K,rew_links);
     end
@@ -63,9 +63,7 @@ parfor g=1:n_graphs
                     for m=1:length(mus)
                         regs.mu = mus(m);
 
-
-                        
-                        [Ao_hat,~] = estA_pgl_colsp_rw(Co,regs,max_iters);
+                        [Ao_hat,~] = PGL_rw(Co,regs,max_iters);
                         Ao_hat = Ao_hat./max(max(Ao_hat));
                         diff_Ao = Ao-Ao_hat;
                         for n=1:K
